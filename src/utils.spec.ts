@@ -16,4 +16,3 @@ test('should return false when input is not empty', (t) => {
   t.false(isEmptyString('false'))
   t.false(isEmptyString('empty'))
 })
-

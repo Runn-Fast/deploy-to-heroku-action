@@ -5,7 +5,14 @@ type DoesAppExistOptions = {
 }
 
 const doesAppExist = async (options: DoesAppExistOptions): Promise<boolean> => {
-  return true
+  const { appName } = options
+
+  try {
+    await exec('heroku', ['apps:info', `--app="${appName}"`])
+    return true
+  } catch {
+    return false
+  }
 }
 
 type CreateAppOptions = {

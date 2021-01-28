@@ -3,9 +3,9 @@ import * as core from '@actions/core'
 import * as heroku from './heroku'
 import { isEmptyString } from './utils'
 
-const { GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REF } = process.env
+console.dir(process.env, { depth: 1 })
 
-console.log({ GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REF })
+const { GITHUB_EVENT_NAME, GITHUB_REF } = process.env
 
 type Target = {
   mainAppName: string,
@@ -28,7 +28,7 @@ const getDeploymentTargets = (): Target[] => {
           isProduction: false,
         },
       ]
-    case 'branch':
+    case 'push':
       switch (GITHUB_REF) {
         case 'refs/heads/test':
           return [
