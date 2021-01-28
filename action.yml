@@ -3,4 +3,4 @@ description: 'Deploy a docker image to Heroku'
 author: 'Runn'
 runs:
   using: 'node12'
-  main: 'dist/index.js'
+  main: 'bin/index.js'
