@@ -1,11 +1,9 @@
 import * as core from '@actions/core'
 
 import * as heroku from './heroku'
-import { isEmptyString } from './utils'
-
 console.dir(process.env, { depth: 1 })
 
-const { GITHUB_EVENT_NAME, GITHUB_REF } = process.env
+const { GITHUB_REF } = process.env
 
 type Target = {
   mainAppName: string,
@@ -14,51 +12,44 @@ type Target = {
 }
 
 const getDeploymentTargets = (): Target[] => {
-  switch (GITHUB_EVENT_NAME) {
-    case 'pull_request':
-      const pullRequestId = ''
-
-      if (isEmptyString(pullRequestId)) {
-        throw new Error('Could not find the Github Pull Request ID.')
-      }
+  switch (GITHUB_REF) {
+    case 'refs/heads/test':
       return [
         {
-          mainAppName: `runn-review-pr-${pullRequestId}`,
-          hasuraAppName: `runn-hasura-pr-${pullRequestId}`,
+          mainAppName: 'runn-app-test',
+          hasuraAppName: 'runn-hasura-test',
           isProduction: false,
         },
       ]
-    case 'push':
-      switch (GITHUB_REF) {
-        case 'refs/heads/test':
-          return [
-            {
-              mainAppName: 'runn-app-test',
-              hasuraAppName: 'runn-hasura-test',
-              isProduction: false,
-            },
-          ]
-        case 'refs/heads/development':
-          return [
-            {
-              mainAppName: 'runn-app-staging',
-              hasuraAppName: 'runn-hasura-staging',
-              isProduction: false,
-            },
-          ]
-        case 'refs/heads/production':
-          return [
-            {
-              mainAppName: 'runn-app-production',
-              hasuraAppName: 'runn-hasura-production',
-              isProduction: true,
-            },
-          ]
-        default:
-          throw new Error(`Unknown github.ref: "${GITHUB_REF}"`)
-      }
+    case 'refs/heads/development':
+      return [
+        {
+          mainAppName: 'runn-app-staging',
+          hasuraAppName: 'runn-hasura-staging',
+          isProduction: false,
+        },
+      ]
+    case 'refs/heads/production':
+      return [
+        {
+          mainAppName: 'runn-app-production',
+          hasuraAppName: 'runn-hasura-production',
+          isProduction: true,
+        },
+      ]
     default:
-      throw new Error(`Unhandled github.event_name: "${GITHUB_EVENT_NAME}"`)
+      const branchName = GITHUB_REF.replace(/^refs\/heads\//, '').replace(
+        /[^\w]/g,
+        '-',
+      )
+
+      return [
+        {
+          mainAppName: `runn-review-pr-${branchName}`,
+          hasuraAppName: `runn-hasura-pr-${branchName}`,
+          isProduction: false,
+        },
+      ]
   }
 }
 
