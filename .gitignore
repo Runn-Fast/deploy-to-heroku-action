@@ -2,3 +2,4 @@
 /dist/tsconfig.tsbuildinfo
 /dist/*.d.ts
 /dist/*.js.map
+/dist/*.spec.js
