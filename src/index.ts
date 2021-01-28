@@ -1,9 +1,9 @@
 import * as core from '@actions/core'
 
 import * as heroku from './heroku'
-console.dir(process.env, { depth: 1 })
+import * as git from './git'
 
-const { GITHUB_REF } = process.env
+const { GITHUB_SHA, GITHUB_REF } = process.env
 
 type Target = {
   mainAppName: string,
@@ -11,7 +11,7 @@ type Target = {
   isProduction: boolean,
 }
 
-const getDeploymentTargets = (): Target[] => {
+const getDeploymentTargets = async (): Promise<Target[]> => {
   switch (GITHUB_REF) {
     case 'refs/heads/test':
       return [
@@ -38,15 +38,18 @@ const getDeploymentTargets = (): Target[] => {
         },
       ]
     default:
-      const branchName = GITHUB_REF.replace(/^refs\/heads\//, '').replace(
-        /[^\w]/g,
-        '-',
-      )
+      const pullRequestId = await git.findPullRequestId(GITHUB_SHA)
+
+      if (pullRequestId == null) {
+        throw new Error(
+          `Could not pull Pull Request ID for commit ${GITHUB_SHA}`,
+        )
+      }
 
       return [
         {
-          mainAppName: `runn-review-pr-${branchName}`,
-          hasuraAppName: `runn-hasura-pr-${branchName}`,
+          mainAppName: `runn-review-pr-${pullRequestId}`,
+          hasuraAppName: `runn-hasura-pr-${pullRequestId}`,
           isProduction: false,
         },
       ]
