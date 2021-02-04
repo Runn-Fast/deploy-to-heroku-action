@@ -9,7 +9,9 @@ const writeFile = promisify(fs.writeFile)
 
 const getAuthToken = async (): Promise<string> => {
   const authToken = await execAndReadAll('heroku', ['auth:token'])
-  return authToken
+  // it's important to trim the auth token, as it will include a new-line at
+  // the end by default.
+  return authToken.trim()
 }
 
 type LoginOptions = {
