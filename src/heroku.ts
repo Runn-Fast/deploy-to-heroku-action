@@ -1,6 +1,8 @@
 import { exec } from '@actions/exec'
 import fs from 'fs'
 import { promisify } from 'util'
+import { homedir } from 'os'
+import { join as joinPath } from 'path'
 
 const writeFile = promisify(fs.writeFile)
 
@@ -12,6 +14,8 @@ type LoginOptions = {
 const login = async (options: LoginOptions): Promise<void> => {
   const { email, apiKey } = options
 
+  const netrcFilepath = joinPath(homedir(), '.netrc')
+
   const netrc = `machine api.heroku.com
     login ${email}
     password ${apiKey}
@@ -19,9 +23,9 @@ machine git.heroku.com
     login ${email}
     password ${apiKey}`
 
-  await writeFile('~/.netrc', netrc)
+  await writeFile(netrcFilepath, netrc)
 
-  console.log('Created and wrote to ~/.netrc')
+  console.log(`Created and wrote to ${netrcFilepath}`)
   await exec('heroku login')
 }
 
