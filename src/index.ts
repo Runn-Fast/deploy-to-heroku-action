@@ -108,7 +108,20 @@ const main = async () => {
     .map((image) => image.trim())
 
   for (const sourceImage of images) {
-    const [appName, processType] = sourceImage.split('_')
+    const [appType, processType] = sourceImage.split('_')
+
+    let appName: string
+    switch (appType) {
+      case 'app':
+        appName = targets[0].mainAppName
+        break
+      case 'hasura':
+        appName = targets[0].hasuraAppName
+        break
+      default:
+        throw new Error(`Unsupported app type: "${appType}"`)
+    }
+
     const targetImage = `registry.heroku.com/${appName}/${processType}`
     await docker.tag({ sourceImage, targetImage })
     await docker.push({ image: targetImage })
