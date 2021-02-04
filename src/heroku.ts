@@ -37,7 +37,7 @@ const doesAppExist = async (options: DoesAppExistOptions): Promise<boolean> => {
   const { appName } = options
 
   try {
-    await exec('heroku', ['apps:info', `--app="${appName}"`])
+    await exec('heroku', ['apps:info', ['--app', appName]].flat())
     return true
   } catch {
     return false
@@ -54,20 +54,26 @@ type CreateAppOptions = {
 const createApp = async (options: CreateAppOptions): Promise<void> => {
   const { appName, team, pipelineName, pipelineStage } = options
 
-  await exec('heroku', [
-    'apps:create',
-    `"${appName}"`,
-    `--team="${team}"`,
-    '--no-remote',
-    '--stack=container',
-  ])
+  await exec(
+    'heroku',
+    [
+      'apps:create',
+      appName,
+      ['--team', team],
+      '--no-remote',
+      '--stack=container',
+    ].flat(),
+  )
 
-  await exec('heroku', [
-    'pipelines:add',
-    `"${pipelineName}"`,
-    `--stage="${pipelineStage}"`,
-    `--app="${appName}"`,
-  ])
+  await exec(
+    'heroku',
+    [
+      'pipelines:add',
+      pipelineName,
+      ['--stage', pipelineStage],
+      ['--app', appName],
+    ].flat(),
+  )
 }
 
 type CreateAddonOptions = {
