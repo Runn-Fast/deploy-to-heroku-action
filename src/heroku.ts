@@ -1,4 +1,8 @@
 import { exec } from '@actions/exec'
+import fs from 'fs'
+import { promisify } from 'util'
+
+const writeFile = promisify(fs.writeFile)
 
 type LoginOptions = {
   email: string,
@@ -8,14 +12,14 @@ type LoginOptions = {
 const login = async (options: LoginOptions): Promise<void> => {
   const { email, apiKey } = options
 
-  await exec(`cat > ~/.netrc <<EOF
-machine api.heroku.com
+  const netrc = `machine api.heroku.com
     login ${email}
     password ${apiKey}
 machine git.heroku.com
     login ${email}
-    password ${apiKey}
-EOF`)
+    password ${apiKey}`
+
+  await writeFile('~/.netrc', netrc)
 
   console.log('Created and wrote to ~/.netrc')
   await exec('heroku login')
