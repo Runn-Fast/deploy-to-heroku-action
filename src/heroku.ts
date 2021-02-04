@@ -122,16 +122,17 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
 
 type ReleaseContainerOptions = {
   appName: string,
+  processTypes: string[],
 }
 
 const releaseContainer = async (
   options: ReleaseContainerOptions,
 ): Promise<void> => {
-  const { appName } = options
+  const { appName, processTypes } = options
 
   await exec(
     'heroku',
-    ['container:release', 'web', 'worker', ['--app', appName]].flat(),
+    ['container:release', ...processTypes, ['--app', appName]].flat(),
   )
 }
 

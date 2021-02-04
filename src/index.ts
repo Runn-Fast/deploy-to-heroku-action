@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 
 import * as heroku from './heroku'
+import * as docker from './docker'
 
 const { GITHUB_REF } = process.env
 
@@ -106,8 +107,12 @@ const main = async () => {
     .split(',')
     .map((image) => image.trim())
 
-  for (const image of images) {
-    console.log({ image })
+  for (const sourceImage of images) {
+    const [appName, processType] = sourceImage.split('_')
+    const targetImage = `registry.heroku.com/${appName}/${processType}`
+    await docker.tag({ sourceImage, targetImage })
+    await docker.push({ image: targetImage })
+    await heroku.releaseContainer({ appName, processTypes: [processType] })
   }
 }
 
