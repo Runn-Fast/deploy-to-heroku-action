@@ -36,6 +36,8 @@ machine git.heroku.com
 
   // await exec('heroku', ['container:login'])
   const authToken = await getAuthToken()
+  console.log({ authToken: authToken.split('') })
+
   await exec(
     'docker',
     [
