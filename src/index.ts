@@ -88,6 +88,7 @@ const createAppEnvironment = async (target: Target) => {
 const main = async () => {
   const targets = await getDeploymentTargets()
   console.dir({ targets }, { depth: null })
+
   for (const target of targets) {
     await createAppEnvironment(target)
   }

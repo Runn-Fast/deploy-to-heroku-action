@@ -1,5 +1,4 @@
 import { exec } from '@actions/exec'
-import { createWriteStream } from 'fs'
 
 type DoesAppExistOptions = {
   appName: string,
@@ -8,13 +7,8 @@ type DoesAppExistOptions = {
 const doesAppExist = async (options: DoesAppExistOptions): Promise<boolean> => {
   const { appName } = options
 
-  const devNull = createWriteStream('/dev/null')
-
   try {
-    await exec('heroku', ['apps:info', `--app="${appName}"`], {
-      outStream: devNull,
-      errStream: devNull,
-    })
+    await exec('heroku', ['apps:info', `--app="${appName}"`])
     return true
   } catch {
     return false
