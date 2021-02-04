@@ -87,7 +87,7 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
-  await exec('ls', ['~'])
+  await exec('pwd')
   await exec('cat', ['~/.netrc'])
 
   const targets = await getDeploymentTargets()
