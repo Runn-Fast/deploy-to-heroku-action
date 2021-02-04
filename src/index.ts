@@ -86,7 +86,6 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
-  const justLogin = core.getInput('just_login') !== 'false'
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
 
@@ -95,16 +94,20 @@ const main = async () => {
     apiKey: herokuAPIKey,
   })
 
-  if (justLogin) {
-    console.log('Just logging in…')
-    return
-  }
-
   const targets = await getDeploymentTargets()
   console.dir({ targets }, { depth: null })
 
   for (const target of targets) {
     await createAppEnvironment(target)
+  }
+
+  const images = core
+    .getInput('images')
+    .split(',')
+    .map((image) => image.trim())
+
+  for (const image of images) {
+    console.log({ image })
   }
 }
 
