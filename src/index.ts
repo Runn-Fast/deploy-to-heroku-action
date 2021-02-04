@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { exec } from '@actions/exec'
 
 import * as heroku from './heroku'
 
@@ -87,8 +86,10 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
-  await exec('pwd')
-  await exec('cat', ['~/.netrc'])
+  await heroku.login({
+    email: core.getInput('heroku_email'),
+    apiKey: core.getInput('heroku_api_key'),
+  })
 
   const targets = await getDeploymentTargets()
   console.dir({ targets }, { depth: null })

@@ -1,5 +1,26 @@
 import { exec } from '@actions/exec'
 
+type LoginOptions = {
+  email: string,
+  apiKey: string,
+}
+
+const login = async (options: LoginOptions): Promise<void> => {
+  const { email, apiKey } = options
+
+  await exec(`cat > ~/.netrc <<EOF
+machine api.heroku.com
+    login ${email}
+    password ${apiKey}
+machine git.heroku.com
+    login ${email}
+    password ${apiKey}
+EOF`)
+
+  console.log('Created and wrote to ~/.netrc')
+  await exec('heroku login')
+}
+
 type DoesAppExistOptions = {
   appName: string,
 }
@@ -82,4 +103,4 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
   return output
 }
 
-export { doesAppExist, createApp, createAddon, getEnvVar }
+export { login, doesAppExist, createApp, createAddon, getEnvVar }
