@@ -7,6 +7,7 @@ type TagOptions = {
 
 const tag = async (options: TagOptions): Promise<void> => {
   const { sourceImage, targetImage } = options
+  await exec('docker', ['images']) // TODO(GC): remove this line
   await exec('docker', ['tag', sourceImage, targetImage])
 }
 

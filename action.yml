@@ -9,7 +9,7 @@ inputs:
     description: "Email that you use with heroku"
     required: true
   images:
-    description: "Comma separated list of images to deploy. Each image should be of the form `appName_processType`"
+    description: "Comma separated list of images to deploy. Each image should be of the form `appType_processType`"
     required: true
 runs:
   using: 'node12'
