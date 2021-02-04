@@ -2,9 +2,8 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 
 import * as heroku from './heroku'
-import * as git from './git'
 
-const { GITHUB_SHA, GITHUB_REF } = process.env
+const { GITHUB_REF } = process.env
 
 type Target = {
   mainAppName: string,
@@ -39,12 +38,10 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         },
       ]
     default:
-      const pullRequestId = await git.findPullRequestId(GITHUB_SHA)
+      const pullRequestId = github.context.payload.number
 
       if (pullRequestId == null) {
-        throw new Error(
-          `Could not find Pull Request ID for commit ${GITHUB_SHA}`,
-        )
+        throw new Error(`Could not find Pull Request ID in github.context`)
       }
 
       return [
@@ -89,9 +86,8 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
-  console.dir(github, { depth: 5 })
-
   const targets = await getDeploymentTargets()
+  console.dir({ targets }, { depth: null })
   for (const target of targets) {
     await createAppEnvironment(target)
   }
