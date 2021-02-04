@@ -1,4 +1,4 @@
-import { exec } from '@actions/exec'
+import { exec } from './exec'
 
 type TagOptions = {
   sourceImage: string,

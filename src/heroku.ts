@@ -1,10 +1,16 @@
-import { exec } from '@actions/exec'
 import fs from 'fs'
 import { promisify } from 'util'
 import { homedir } from 'os'
 import { join as joinPath } from 'path'
 
+import { exec, execAndReadAll } from './exec'
+
 const writeFile = promisify(fs.writeFile)
+
+const getAuthToken = async (): Promise<string> => {
+  const authToken = await execAndReadAll('heroku', ['auth:token'])
+  return authToken
+}
 
 type LoginOptions = {
   email: string,
@@ -27,7 +33,10 @@ machine git.heroku.com
 
   console.log(`Created and wrote to ${netrcFilepath}`)
   await exec('heroku', ['whoami'])
-  await exec('heroku', ['container:login'])
+
+  // await exec('heroku', ['container:login'])
+  const authToken = await getAuthToken()
+  await exec('docker', ['login', ['--username', '_'], ['--password', authToken], 'registry.heroku.com'].flat())
 }
 
 type DoesAppExistOptions = {
@@ -108,16 +117,8 @@ type GetEnvVarOptions = {
 const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
   const { appName, varName } = options
 
-  let output = ''
-
-  await exec('heroku', ['config:get', varName, ['--app', appName]].flat(), {
-    listeners: {
-      stdout: (data: Buffer) => {
-        output += data.toString()
-      },
-    },
-  })
-  return output
+  const value = await execAndReadAll('heroku', ['config:get', varName, ['--app', appName]].flat())
+  return value
 }
 
 type ReleaseContainerOptions = {
