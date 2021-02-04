@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import github from '@actions/github'
+import * as github from '@actions/github'
 
 import * as heroku from './heroku'
 import * as git from './git'
@@ -43,7 +43,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
 
       if (pullRequestId == null) {
         throw new Error(
-          `Could not pull Pull Request ID for commit ${GITHUB_SHA}`,
+          `Could not find Pull Request ID for commit ${GITHUB_SHA}`,
         )
       }
 
