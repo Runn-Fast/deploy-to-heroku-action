@@ -1,6 +1,9 @@
 import { exec } from '@actions/exec'
 
-const execAndReadAll = async (command: string, args: string[]): Promise<string> => {
+const execAndReadAll = async (
+  command: string,
+  args: string[],
+): Promise<string> => {
   let output = ''
 
   await exec(command, args, {

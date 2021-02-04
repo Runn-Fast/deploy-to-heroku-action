@@ -36,7 +36,15 @@ machine git.heroku.com
 
   // await exec('heroku', ['container:login'])
   const authToken = await getAuthToken()
-  await exec('docker', ['login', ['--username', '_'], ['--password', authToken], 'registry.heroku.com'].flat())
+  await exec(
+    'docker',
+    [
+      'login',
+      ['--username', '_'],
+      ['--password', authToken],
+      'registry.heroku.com',
+    ].flat(),
+  )
 }
 
 type DoesAppExistOptions = {
@@ -117,7 +125,10 @@ type GetEnvVarOptions = {
 const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
   const { appName, varName } = options
 
-  const value = await execAndReadAll('heroku', ['config:get', varName, ['--app', appName]].flat())
+  const value = await execAndReadAll(
+    'heroku',
+    ['config:get', varName, ['--app', appName]].flat(),
+  )
   return value
 }
 
