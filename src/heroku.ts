@@ -26,7 +26,7 @@ machine git.heroku.com
   await writeFile(netrcFilepath, netrc)
 
   console.log(`Created and wrote to ${netrcFilepath}`)
-  await exec('heroku login')
+  await exec('heroku', ['whoami'])
 }
 
 type DoesAppExistOptions = {
