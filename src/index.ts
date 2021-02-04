@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import github from '@actions/github'
 
 import * as heroku from './heroku'
 import * as git from './git'
@@ -88,6 +89,8 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
+  console.dir(github, { depth: 5 })
+
   const targets = await getDeploymentTargets()
   for (const target of targets) {
     await createAppEnvironment(target)
