@@ -27,6 +27,7 @@ machine git.heroku.com
 
   console.log(`Created and wrote to ${netrcFilepath}`)
   await exec('heroku', ['whoami'])
+  await exec('heroku', ['container:login'])
 }
 
 type DoesAppExistOptions = {
@@ -89,11 +90,13 @@ const createAddon = async (options: CreateAddonOptions): Promise<void> => {
   await exec(
     'heroku',
     [
-      `"${addonName}"`,
-      `--app="${appName}"`,
-      version != null ? `--version="${version}"` : undefined,
+      addonName,
+      ['--app', appName],
+      version != null ? ['--version', version] : undefined,
       wait === true ? '--wait' : undefined,
-    ].filter(Boolean),
+    ]
+      .filter(Boolean)
+      .flat(),
   )
 }
 
@@ -107,7 +110,7 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
 
   let output = ''
 
-  await exec('heroku', ['config:get', `"${varName}"`, `--app="${appName}"`], {
+  await exec('heroku', ['config:get', varName, ['--app', appName]].flat(), {
     listeners: {
       stdout: (data: Buffer) => {
         output += data.toString()
@@ -117,4 +120,48 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
   return output
 }
 
-export { login, doesAppExist, createApp, createAddon, getEnvVar }
+type ReleaseContainerOptions = {
+  appName: string,
+}
+
+const releaseContainer = async (
+  options: ReleaseContainerOptions,
+): Promise<void> => {
+  const { appName } = options
+
+  await exec(
+    'heroku',
+    ['container:release', 'web', 'worker', ['--app', appName]].flat(),
+  )
+}
+
+type ScaleDynosOptions = {
+  appName: string,
+  dynos: [string, number][],
+}
+
+const scaleDynos = async (options: ScaleDynosOptions): Promise<void> => {
+  const { appName, dynos } = options
+
+  const dynoArgs = dynos.map(
+    ([processName, count]) => `${processName}=${count}`,
+  )
+
+  await exec('heroku', ['ps:scale', ...dynoArgs, ['--app', appName]].flat())
+}
+
+// heroku run bundle exec rake db:migrate --app "${{ env.PARENT_APP_NAME }}" --type worker
+//
+// if [[ "${{ env.APP_IS_PRODUCTION }}" == "false" ]]; then
+//   heroku run bundle exec rake db:seed --app "${{ env.PARENT_APP_NAME }}" --type worker
+// fi
+
+export {
+  login,
+  doesAppExist,
+  createApp,
+  createAddon,
+  getEnvVar,
+  releaseContainer,
+  scaleDynos,
+}

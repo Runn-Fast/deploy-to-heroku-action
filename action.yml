@@ -8,6 +8,10 @@ inputs:
   heroku_email:
     description: "Email that you use with heroku"
     required: true
+  just_login:
+    description: "Set to true if you want the action to just login to Heroku and nothing else"
+    required: false
+    default: "false"
 runs:
   using: 'node12'
   main: 'bin/index.js'

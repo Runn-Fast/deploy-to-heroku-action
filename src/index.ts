@@ -86,10 +86,19 @@ const createAppEnvironment = async (target: Target) => {
 }
 
 const main = async () => {
+  const justLogin = core.getInput('just_login') !== 'false'
+  const herokuEmail = core.getInput('heroku_email')
+  const herokuAPIKey = core.getInput('heroku_api_key')
+
   await heroku.login({
-    email: core.getInput('heroku_email'),
-    apiKey: core.getInput('heroku_api_key'),
+    email: herokuEmail,
+    apiKey: herokuAPIKey,
   })
+
+  if (justLogin) {
+    console.log('Just logging in…')
+    return
+  }
 
   const targets = await getDeploymentTargets()
   console.dir({ targets }, { depth: null })
