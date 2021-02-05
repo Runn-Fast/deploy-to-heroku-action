@@ -2,6 +2,7 @@ import fs from 'fs'
 import { promisify } from 'util'
 import { homedir } from 'os'
 import { join as joinPath } from 'path'
+import { createWriteStream } from 'fs'
 
 import { exec, execAndReadAll } from './exec'
 
@@ -47,7 +48,7 @@ const getAppList = async (
     'heroku',
     ['apps', '--json', ['--team', team]].flat(),
     {
-      outStream: null,
+      outStream: createWriteStream('/dev/null'),
     },
   )
 
