@@ -46,6 +46,9 @@ const getAppList = async (
   const info = await execAndReadAll(
     'heroku',
     ['apps', '--json', ['--team', team]].flat(),
+    {
+      outStream: null,
+    },
   )
 
   return JSON.parse(info)
@@ -95,6 +98,26 @@ const createApp = async (options: CreateAppOptions): Promise<void> => {
       ['--stage', pipelineStage],
       ['--app', appName],
     ].flat(),
+  )
+}
+
+type DestroyAppOptions = {
+  appName: string,
+}
+
+const destroyApp = async (options: DestroyAppOptions): Promise<void> => {
+  const { appName } = options
+
+  // safety net
+  if (/(production|euronext|staging)/.test(appName)) {
+    throw new Error(
+      `Error: you should only destroy development apps, not "${appName}"`,
+    )
+  }
+
+  await exec(
+    'heroku',
+    ['apps:destroy', ['--app', appName], ['--confirm', appName]].flat(),
   )
 }
 
@@ -195,6 +218,7 @@ export {
   getAppList,
   doesAppExist,
   createApp,
+  destroyApp,
   createAddon,
   getEnvVar,
   setEnvVars,

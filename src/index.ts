@@ -180,7 +180,8 @@ const cleanup = async (options: CleanupOptions): Promise<void> => {
     if (openPullRequestIDs.includes(id)) {
       console.log(`PR ${id} is still open, leaving app "${name}" as is`)
     } else {
-      console.log(`PR ${id} has been closed, deleting "${name}"`)
+      console.log(`PR ${id} has been closed, destroying app "${name}"`)
+      await heroku.destroyApp({ appName: name })
     }
   }
 }
