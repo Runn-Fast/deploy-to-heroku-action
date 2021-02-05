@@ -63,7 +63,14 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
   }
 }
 
-const createAppEnvironment = async (target: Target) => {
+type CreateAppEnviromentOptions = {
+  target: Target,
+  hasuraAdminSecret: string,
+}
+
+const createAppEnvironment = async (options: CreateAppEnviromentOptions) => {
+  const { target, hasuraAdminSecret } = options
+
   const {
     mainAppName,
     hasuraAppName,
@@ -139,10 +146,15 @@ const createAppEnvironment = async (target: Target) => {
     }
 
     await heroku.setEnvVars({
-      appName: mainAppName,
+      appName: hasuraAppName,
       config: {
-        HASURA_JWT_SECRET: jwtSecret,
-        DATABASE_URL: databaseUrl,
+        HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
+        HASURA_GRAPHQL_ADMIN_SECRET: hasuraAdminSecret,
+        HASURA_GRAPHQL_DEV_MODE: 'true',
+        HASURA_GRAPHQL_ENABLE_CONSOLE: 'true',
+        HASURA_GRAPHQL_ENABLE_TELEMETRY: 'false',
+        HASURA_GRAPHQL_JWT_SECRET: `{ "type": "HS256", "key": "${jwtSecret}", "claims_format": "json" }`,
+        ACTIONS_BASE_URL: `https://${mainAppName}.herokuapp.com`,
       },
     })
   }
@@ -190,6 +202,7 @@ const main = async () => {
   const githubAPIKey = core.getInput('github_api_key')
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
+  const hasuraAdminSecret = core.getInput('hasura_admin_secret')
 
   await heroku.login({
     email: herokuEmail,
@@ -202,7 +215,7 @@ const main = async () => {
   console.dir({ targets }, { depth: null })
 
   for (const target of targets) {
-    await createAppEnvironment(target)
+    await createAppEnvironment({ target, hasuraAdminSecret })
   }
 
   const images = core
@@ -229,6 +242,7 @@ const main = async () => {
     await docker.tag({ sourceImage, targetImage })
     await docker.push({ image: targetImage })
     await heroku.releaseContainer({ appName, processTypes: [processType] })
+    await heroku.scaleProcesses({ appName, processes: { [processType]: 0 } })
   }
 }
 

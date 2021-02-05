@@ -193,19 +193,21 @@ const releaseContainer = async (
   )
 }
 
-type ScaleDynosOptions = {
+type ScaleProcessesOptions = {
   appName: string,
-  dynos: [string, number][],
+  processes: Record<string, number>,
 }
 
-const scaleDynos = async (options: ScaleDynosOptions): Promise<void> => {
-  const { appName, dynos } = options
+const scaleProcesses = async (
+  options: ScaleProcessesOptions,
+): Promise<void> => {
+  const { appName, processes } = options
 
-  const dynoArgs = dynos.map(
+  const args = Object.entries(processes).map(
     ([processName, count]) => `${processName}=${count}`,
   )
 
-  await exec('heroku', ['ps:scale', ...dynoArgs, ['--app', appName]].flat())
+  await exec('heroku', ['ps:scale', ...args, ['--app', appName]].flat())
 }
 
 // heroku run bundle exec rake db:migrate --app "${{ env.PARENT_APP_NAME }}" --type worker
@@ -224,5 +226,5 @@ export {
   getEnvVar,
   setEnvVars,
   releaseContainer,
-  scaleDynos,
+  scaleProcesses,
 }
