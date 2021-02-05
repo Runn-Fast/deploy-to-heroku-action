@@ -11,8 +11,8 @@ inputs:
   heroku_email:
     description: "Email that you use with heroku"
     required: true
-  hasura_admin_secret:
-    description: "The password to set for the Hasura Admin console."
+  env_vars:
+    description: "New-line seperated list of env vars in the format KEY=value. Do not quote the values!"
     required: true
   images:
     description: "Comma separated list of images to deploy. Each image should be of the form `appType_processType`"

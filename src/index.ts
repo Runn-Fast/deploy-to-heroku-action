@@ -4,6 +4,8 @@ import * as github from '@actions/github'
 import * as heroku from './heroku'
 import * as docker from './docker'
 import { isEmptyString } from './utils'
+import { parseEnvVars } from './parse-env-vars'
+import { randomHex } from './crypto'
 
 const { GITHUB_REF } = process.env
 
@@ -65,11 +67,11 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
 
 type CreateAppEnviromentOptions = {
   target: Target,
-  hasuraAdminSecret: string,
+  envVars: Record<string, string>,
 }
 
 const createAppEnvironment = async (options: CreateAppEnviromentOptions) => {
-  const { target, hasuraAdminSecret } = options
+  const { target, envVars } = options
 
   const {
     mainAppName,
@@ -105,6 +107,18 @@ const createAppEnvironment = async (options: CreateAppEnviromentOptions) => {
       addonName: 'heroku-postgresql:hobby-dev',
       version: '12',
       wait: true,
+    })
+
+    const jwtSecret = randomHex(64)
+    const secretKeyBase = randomHex(64)
+
+    await heroku.setEnvVars({
+      appName: mainAppName,
+      config: {
+        ...envVars,
+        HASURA_JWT_SECRET: jwtSecret,
+        SECRET_KEY_BASE: secretKeyBase,
+      },
     })
   }
 
@@ -149,7 +163,7 @@ const createAppEnvironment = async (options: CreateAppEnviromentOptions) => {
       appName: hasuraAppName,
       config: {
         HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
-        HASURA_GRAPHQL_ADMIN_SECRET: hasuraAdminSecret,
+        HASURA_GRAPHQL_ADMIN_SECRET: envVars.HASURA_ADMIN_SECRET,
         HASURA_GRAPHQL_DEV_MODE: 'true',
         HASURA_GRAPHQL_ENABLE_CONSOLE: 'true',
         HASURA_GRAPHQL_ENABLE_TELEMETRY: 'false',
@@ -202,7 +216,9 @@ const main = async () => {
   const githubAPIKey = core.getInput('github_api_key')
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
-  const hasuraAdminSecret = core.getInput('hasura_admin_secret')
+
+  const rawEnvVars = core.getInput('env_vars')
+  const envVars = parseEnvVars(rawEnvVars)
 
   await heroku.login({
     email: herokuEmail,
@@ -215,7 +231,7 @@ const main = async () => {
   console.dir({ targets }, { depth: null })
 
   for (const target of targets) {
-    await createAppEnvironment({ target, hasuraAdminSecret })
+    await createAppEnvironment({ target, envVars })
   }
 
   const images = core
