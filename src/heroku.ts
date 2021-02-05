@@ -7,13 +7,6 @@ import { exec, execAndReadAll } from './exec'
 
 const writeFile = promisify(fs.writeFile)
 
-const getAuthToken = async (): Promise<string> => {
-  const authToken = await execAndReadAll('heroku', ['auth:token'])
-  // it's important to trim the auth token, as it will include a new-line at
-  // the end by default.
-  return authToken.trim()
-}
-
 type LoginOptions = {
   email: string,
   apiKey: string,
@@ -34,21 +27,7 @@ machine git.heroku.com
   await writeFile(netrcFilepath, netrc)
 
   console.log(`Created and wrote to ${netrcFilepath}`)
-  await exec('heroku', ['whoami'])
-
-  // await exec('heroku', ['container:login'])
-  const authToken = await getAuthToken()
-  console.log({ authToken: authToken.split('') })
-
-  await exec(
-    'docker',
-    [
-      'login',
-      ['--username', '_'],
-      ['--password', authToken],
-      'registry.heroku.com',
-    ].flat(),
-  )
+  await exec('heroku', ['container:login'])
 }
 
 type DoesAppExistOptions = {
@@ -133,7 +112,23 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
     'heroku',
     ['config:get', varName, ['--app', appName]].flat(),
   )
-  return value
+
+  return value.trim()
+}
+
+type SetEnvVarOptions = {
+  appName: string,
+  config: Record<string, string>,
+}
+
+const setEnvVars = async (options: SetEnvVarOptions): Promise<void> => {
+  const { appName, config } = options
+
+  const vars = Object.entries(config).map(([key, value]) => {
+    return `${key}=${value}`
+  })
+
+  await exec('heroku', ['config:set', ...vars, ['--app', appName]].flat())
 }
 
 type ReleaseContainerOptions = {
@@ -179,6 +174,7 @@ export {
   createApp,
   createAddon,
   getEnvVar,
+  setEnvVars,
   releaseContainer,
   scaleDynos,
 }

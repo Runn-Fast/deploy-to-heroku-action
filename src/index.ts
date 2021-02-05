@@ -3,6 +3,7 @@ import * as github from '@actions/github'
 
 import * as heroku from './heroku'
 import * as docker from './docker'
+import { isEmptyString } from './utils'
 
 const { GITHUB_REF } = process.env
 
@@ -47,8 +48,8 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
 
       return [
         {
-          mainAppName: `runn-review-pr-${pullRequestId}`,
-          hasuraAppName: `runn-hasura-pr-${pullRequestId}`,
+          mainAppName: `runn-pr-${pullRequestId}-app`,
+          hasuraAppName: `runn-pr-${pullRequestId}-hasura`,
           isProduction: false,
         },
       ]
@@ -56,9 +57,11 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
 }
 
 const createAppEnvironment = async (target: Target) => {
-  const { mainAppName } = target
+  const { mainAppName, hasuraAppName } = target
 
   const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
+  const hasuraAppExists = await heroku.doesAppExist({ appName: hasuraAppName })
+
   if (!mainAppExists) {
     await heroku.createApp({
       appName: mainAppName,
@@ -76,17 +79,62 @@ const createAppEnvironment = async (target: Target) => {
       version: '12',
       wait: true,
     })
+  }
 
-    const databaseUrl = heroku.getEnvVar({
+  if (!hasuraAppExists) {
+    await heroku.createApp({
+      appName: hasuraAppName,
+      team: 'runn',
+      pipelineName: 'runn-app',
+      pipelineStage: 'development',
+    })
+
+    let jwtSecret = await heroku.getEnvVar({
+      appName: mainAppName,
+      varName: 'HASURA_JWT_SECRET',
+    })
+    let databaseUrl = await heroku.getEnvVar({
       appName: mainAppName,
       varName: 'DATABASE_URL',
     })
 
-    console.log({ databaseUrl })
+    if (isEmptyString(jwtSecret)) {
+      console.log(
+        `Warning: The '${mainAppName}' Heroku app does not have a HASURA_JWT_SECRET env var!`,
+      )
+      jwtSecret = 'please_update_me'
+    }
+
+    if (isEmptyString(databaseUrl)) {
+      console.log(
+        `Warning: The '${mainAppName}' Heroku app does not have a DATABASE_URL env var!`,
+      )
+      databaseUrl = 'please_update_me'
+    }
+
+    await heroku.setEnvVars({
+      appName: mainAppName,
+      config: {
+        HASURA_JWT_SECRET: jwtSecret,
+        DATABASE_URL: databaseUrl,
+      },
+    })
   }
 }
 
 const main = async () => {
+  const githubAPIKey = core.getInput('github_api_key')
+  const octokit = github.getOctokit(githubAPIKey)
+
+  const pullRequests = await octokit.request(
+    'GET /repos/{owner}/{repo}/pulls',
+    {
+      owner: 'Runn-Fast',
+      repo: 'runn',
+    },
+  )
+  console.log(pullRequests)
+
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
 

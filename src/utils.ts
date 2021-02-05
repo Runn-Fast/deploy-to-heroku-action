@@ -1,10 +1,8 @@
 const isEmptyString = (value: string): boolean => {
-  if (value == null) {
+  if (typeof value !== 'string') {
     return true
   }
-  if (typeof value === 'string') {
-    return value.trim().length === 0
-  }
+  return value.trim().length === 0
 }
 
 export { isEmptyString }

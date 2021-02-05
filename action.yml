@@ -2,6 +2,9 @@ name: 'Deploy to Heroku'
 description: 'Deploy a docker image to Heroku'
 author: 'Runn'
 inputs:
+  github_api_key:
+    description: "This will be used to check the status of pull requests."
+    required: true
   heroku_api_key:
     description: "This will be used for authentication. You can find it in your heroku homepage account settings"
     required: true
