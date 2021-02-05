@@ -90,6 +90,7 @@ const createAddon = async (options: CreateAddonOptions): Promise<void> => {
   await exec(
     'heroku',
     [
+      'addons:create',
       addonName,
       ['--app', appName],
       version != null ? ['--version', version] : undefined,

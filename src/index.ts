@@ -10,25 +10,26 @@ const { GITHUB_REF } = process.env
 type Target = {
   mainAppName: string,
   hasuraAppName: string,
-  isProduction: boolean,
+  team: string,
+  pipelineName: string,
+  pipelineStage: string,
+  createAppIfNotExists: boolean,
 }
 
 const getDeploymentTargets = async (): Promise<Target[]> => {
+  const team = 'runn'
+  const pipelineName = 'runn-app'
+
   switch (GITHUB_REF) {
-    case 'refs/heads/test':
-      return [
-        {
-          mainAppName: 'runn-app-test',
-          hasuraAppName: 'runn-hasura-test',
-          isProduction: false,
-        },
-      ]
     case 'refs/heads/development':
       return [
         {
           mainAppName: 'runn-app-staging',
           hasuraAppName: 'runn-hasura-staging',
-          isProduction: false,
+          team,
+          pipelineName,
+          pipelineStage: 'staging',
+          createAppIfNotExists: false,
         },
       ]
     case 'refs/heads/production':
@@ -36,7 +37,10 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         {
           mainAppName: 'runn-app-production',
           hasuraAppName: 'runn-hasura-production',
-          isProduction: true,
+          team,
+          pipelineName,
+          pipelineStage: 'production',
+          createAppIfNotExists: false,
         },
       ]
     default:
@@ -50,24 +54,40 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         {
           mainAppName: `runn-pr-${pullRequestId}-app`,
           hasuraAppName: `runn-pr-${pullRequestId}-hasura`,
-          isProduction: false,
+          team,
+          pipelineName,
+          pipelineStage: 'development',
+          createAppIfNotExists: true,
         },
       ]
   }
 }
 
 const createAppEnvironment = async (target: Target) => {
-  const { mainAppName, hasuraAppName } = target
+  const {
+    mainAppName,
+    hasuraAppName,
+    team,
+    pipelineName,
+    pipelineStage,
+    createAppIfNotExists,
+  } = target
 
   const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
   const hasuraAppExists = await heroku.doesAppExist({ appName: hasuraAppName })
 
   if (!mainAppExists) {
+    if (!createAppIfNotExists) {
+      throw new Error(
+        `The heroku app "${mainAppExists}" does not exist and createAppIfNotExists is set to false for this environment`,
+      )
+    }
+
     await heroku.createApp({
       appName: mainAppName,
-      team: 'runn',
-      pipelineName: 'runn-app',
-      pipelineStage: 'development',
+      team,
+      pipelineName,
+      pipelineStage,
     })
     await heroku.createAddon({
       appName: mainAppName,
@@ -82,11 +102,17 @@ const createAppEnvironment = async (target: Target) => {
   }
 
   if (!hasuraAppExists) {
+    if (!createAppIfNotExists) {
+      throw new Error(
+        `The heroku app "${hasuraAppExists}" does not exist and createAppIfNotExists is set to false for this environment`,
+      )
+    }
+
     await heroku.createApp({
       appName: hasuraAppName,
-      team: 'runn',
-      pipelineName: 'runn-app',
-      pipelineStage: 'development',
+      team,
+      pipelineName,
+      pipelineStage,
     })
 
     let jwtSecret = await heroku.getEnvVar({
@@ -126,14 +152,19 @@ const main = async () => {
   const githubAPIKey = core.getInput('github_api_key')
   const octokit = github.getOctokit(githubAPIKey)
 
-  const pullRequests = await octokit.request(
+  const { data: pullRequests } = await octokit.request(
     'GET /repos/{owner}/{repo}/pulls',
     {
       owner: 'Runn-Fast',
       repo: 'runn',
+      state: 'open',
     },
   )
-  console.log(pullRequests)
+
+  console.log(
+    'Open Pull Request IDs:',
+    pullRequests.map((pr) => pr.number),
+  )
 
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
