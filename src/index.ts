@@ -190,12 +190,12 @@ const main = async () => {
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
 
-  await cleanup({ githubAPIKey })
-
   await heroku.login({
     email: herokuEmail,
     apiKey: herokuAPIKey,
   })
+
+  await cleanup({ githubAPIKey })
 
   const targets = await getDeploymentTargets()
   console.dir({ targets }, { depth: null })
