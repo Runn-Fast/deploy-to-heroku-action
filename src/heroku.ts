@@ -30,6 +30,27 @@ machine git.heroku.com
   await exec('heroku', ['container:login'])
 }
 
+type GetAppListOptions = {
+  team: string,
+}
+
+type GetAppListResult = {
+  name: string,
+}[]
+
+const getAppList = async (
+  options: GetAppListOptions,
+): Promise<GetAppListResult> => {
+  const { team } = options
+
+  const info = await execAndReadAll(
+    'heroku',
+    ['apps', '--json', ['--team', team]].flat(),
+  )
+
+  return JSON.parse(info)
+}
+
 type DoesAppExistOptions = {
   appName: string,
 }
@@ -171,6 +192,7 @@ const scaleDynos = async (options: ScaleDynosOptions): Promise<void> => {
 
 export {
   login,
+  getAppList,
   doesAppExist,
   createApp,
   createAddon,

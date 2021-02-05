@@ -148,8 +148,13 @@ const createAppEnvironment = async (target: Target) => {
   }
 }
 
-const main = async () => {
-  const githubAPIKey = core.getInput('github_api_key')
+type CleanupOptions = {
+  githubAPIKey: string,
+}
+
+const cleanup = async (options: CleanupOptions): Promise<void> => {
+  const { githubAPIKey } = options
+
   const octokit = github.getOctokit(githubAPIKey)
 
   const { data: pullRequests } = await octokit.request(
@@ -161,13 +166,31 @@ const main = async () => {
     },
   )
 
-  console.log(
-    'Open Pull Request IDs:',
-    pullRequests.map((pr) => pr.number),
-  )
+  const openPullRequestIDs = pullRequests.map((pr) => pr.number)
 
+  const herokuApps = await heroku.getAppList({ team: 'runn' })
+
+  for (const herokuApp of herokuApps) {
+    const { name } = herokuApp
+    const match = /^runn-pr-(\d+)-/.exec(name)
+    if (match == null) {
+      continue
+    }
+    const id = parseInt(match[1], 10)
+    if (openPullRequestIDs.includes(id)) {
+      console.log(`PR ${id} is still open, leaving app "${name}" as is`)
+    } else {
+      console.log(`PR ${id} has been closed, deleting "${name}"`)
+    }
+  }
+}
+
+const main = async () => {
+  const githubAPIKey = core.getInput('github_api_key')
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
+
+  await cleanup({ githubAPIKey })
 
   await heroku.login({
     email: herokuEmail,
