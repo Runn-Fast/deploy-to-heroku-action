@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 
 import * as docker from './docker'
 import * as heroku from './heroku'
-import { createAppEnvironment } from './create-app-environment'
+import { createMainApp, createHasuraApp } from './create-app-environment'
 import { garbageCollectHerokuApps } from './garbage-collect-heroku-apps'
 import { getDeploymentTargets } from './targets'
 import { parseEnvVars } from './env-vars'
@@ -29,12 +29,8 @@ const main = async () => {
   console.dir({ targets }, { depth: null })
 
   for (const target of targets) {
-    const { freshMainApp, freshHasuraApp } = await createAppEnvironment({
-      target,
-      envVars,
-    })
-
     let deployingMainApp = false
+    let freshMainApp = false
 
     for (const sourceImage of images) {
       const [appType, processType] = sourceImage.split('_')
@@ -52,42 +48,57 @@ const main = async () => {
           throw new Error(`Unsupported app type: "${appType}"`)
       }
 
+      let freshApp: boolean
+      switch (appName) {
+        case target.mainAppName:
+          freshApp = await createMainApp({ target, envVars })
+          if (freshApp) {
+            freshMainApp = true
+          }
+          break
+        case target.hasuraAppName:
+          freshApp = await createHasuraApp({ target, envVars })
+          break
+        default:
+          throw new Error(`Unsupported app name: "${appName}"`)
+      }
+
       const targetImage = `registry.heroku.com/${appName}/${processType}`
       await docker.tag({ sourceImage, targetImage })
       await docker.push({ image: targetImage })
       await heroku.releaseContainer({ appName, processTypes: [processType] })
 
-      if (appName === target.hasuraAppName && freshHasuraApp) {
+      if (freshApp) {
         // wait for database to be seeded before we start hasura
         await heroku.scaleProcesses({
-          appName: target.hasuraAppName,
+          appName,
           processes: { [processType]: 0 },
-        })
-      }
-
-      if (appName === target.mainAppName) {
-        await heroku.run({
-          appName: target.mainAppName,
-          type: 'worker',
-          command: ['bundle', 'exec', 'rake', 'db:migrate'],
         })
       }
     }
 
-    if (deployingMainApp && freshMainApp) {
+    if (deployingMainApp) {
       await heroku.run({
         appName: target.mainAppName,
         type: 'worker',
-        command: ['bundle', 'exec', 'rake', 'db:seed'],
+        command: ['bundle', 'exec', 'rake', 'db:migrate'],
       })
-      await heroku.scaleProcesses({
-        appName: target.mainAppName,
-        processes: { web: 1, worker: 1 },
-      })
-      await heroku.scaleProcesses({
-        appName: target.hasuraAppName,
-        processes: { web: 1 },
-      })
+
+      if (freshMainApp) {
+        await heroku.run({
+          appName: target.mainAppName,
+          type: 'worker',
+          command: ['bundle', 'exec', 'rake', 'db:seed'],
+        })
+        await heroku.scaleProcesses({
+          appName: target.mainAppName,
+          processes: { web: 1, worker: 1 },
+        })
+        await heroku.scaleProcesses({
+          appName: target.hasuraAppName,
+          processes: { web: 1 },
+        })
+      }
     }
   }
 }

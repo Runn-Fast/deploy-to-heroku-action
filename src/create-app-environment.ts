@@ -4,37 +4,29 @@ import { randomHex } from './crypto'
 import { isEmptyString } from './utils'
 import { EnvVars } from './env-vars'
 
-type CreateAppEnviromentOptions = {
+type CreateMainAppOptions = {
   target: Target,
   envVars: EnvVars,
 }
 
-type CreateAppEnviromentResult = {
-  freshMainApp: boolean,
-  freshHasuraApp: boolean,
-}
-
-const createAppEnvironment = async (
-  options: CreateAppEnviromentOptions,
-): Promise<CreateAppEnviromentResult> => {
+const createMainApp = async (
+  options: CreateMainAppOptions,
+): Promise<boolean> => {
   const { target, envVars } = options
-
   const {
     mainAppName,
-    hasuraAppName,
     team,
     pipelineName,
     pipelineStage,
     createAppIfNotExists,
   } = target
 
-  const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
-  const hasuraAppExists = await heroku.doesAppExist({ appName: hasuraAppName })
+  const appExists = await heroku.doesAppExist({ appName: mainAppName })
 
-  if (!mainAppExists) {
+  if (!appExists) {
     if (!createAppIfNotExists) {
       throw new Error(
-        `The heroku app "${mainAppExists}" does not exist and createAppIfNotExists is set to false for this environment`,
+        `The heroku app "${mainAppName}" does not exist and createAppIfNotExists is set to false for this environment`,
       )
     }
 
@@ -68,10 +60,34 @@ const createAppEnvironment = async (
     })
   }
 
-  if (!hasuraAppExists) {
+  const freshMainApp = !appExists
+  return freshMainApp
+}
+
+type CreateHasuraAppOptions = {
+  target: Target,
+  envVars: EnvVars,
+}
+
+const createHasuraApp = async (
+  options: CreateHasuraAppOptions,
+): Promise<boolean> => {
+  const { target, envVars } = options
+  const {
+    mainAppName,
+    hasuraAppName,
+    team,
+    pipelineName,
+    pipelineStage,
+    createAppIfNotExists,
+  } = target
+
+  const appExists = await heroku.doesAppExist({ appName: hasuraAppName })
+
+  if (!appExists) {
     if (!createAppIfNotExists) {
       throw new Error(
-        `The heroku app "${hasuraAppExists}" does not exist and createAppIfNotExists is set to false for this environment`,
+        `The heroku app "${hasuraAppName}" does not exist and createAppIfNotExists is set to false for this environment`,
       )
     }
 
@@ -116,10 +132,8 @@ const createAppEnvironment = async (
     })
   }
 
-  return {
-    freshMainApp: !mainAppExists,
-    freshHasuraApp: !hasuraAppExists,
-  }
+  const freshHasuraApp = !appExists
+  return freshHasuraApp
 }
 
-export { createAppEnvironment }
+export { createMainApp, createHasuraApp }
