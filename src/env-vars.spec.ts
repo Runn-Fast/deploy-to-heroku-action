@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { parseEnvVars } from './parse-env-vars'
+import { parseEnvVars } from './env-vars'
 
 test('should parse valid env var config', (t) => {
   const envVars = parseEnvVars(`

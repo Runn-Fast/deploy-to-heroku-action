@@ -1,4 +1,6 @@
-const parseEnvVars = (input: string): Record<string, string> => {
+type EnvVars = Record<string, string>
+
+const parseEnvVars = (input: string): EnvVars => {
   const lines = input.split('\n')
   return lines
     .map((line) => line.trim())
@@ -22,4 +24,4 @@ const parseEnvVars = (input: string): Record<string, string> => {
   }, {})
 }
 
-export { parseEnvVars }
+export { EnvVars, parseEnvVars }

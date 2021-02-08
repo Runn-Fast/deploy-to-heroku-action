@@ -210,11 +210,19 @@ const scaleProcesses = async (
   await exec('heroku', ['ps:scale', ...args, ['--app', appName]].flat())
 }
 
-// heroku run bundle exec rake db:migrate --app "${{ env.PARENT_APP_NAME }}" --type worker
-//
-// if [[ "${{ env.APP_IS_PRODUCTION }}" == "false" ]]; then
-//   heroku run bundle exec rake db:seed --app "${{ env.PARENT_APP_NAME }}" --type worker
-// fi
+type RunOptions = {
+  appName: string,
+  type: string,
+  command: string[],
+}
+
+const run = async (options: RunOptions): Promise<void> => {
+  const { appName, type, command } = options
+  await exec(
+    'heroku',
+    ['run', ['--app', appName], ['--type', type], '--', ...command].flat(),
+  )
+}
 
 export {
   login,
@@ -227,4 +235,5 @@ export {
   setEnvVars,
   releaseContainer,
   scaleProcesses,
+  run,
 }

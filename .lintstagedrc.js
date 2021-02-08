@@ -1,6 +1,6 @@
 module.exports = {
   "*": (filenames) => ([
-    "npm run tidy",
-    "npm run build"
+    "yarn tidy",
+    "yarn build"
   ])
 }
