@@ -15,15 +15,15 @@ const createMainApp = async (
   const { target, envVars } = options
   const {
     mainAppName,
+    hasuraAppName,
     team,
     pipelineName,
     pipelineStage,
     createAppIfNotExists,
   } = target
 
-  const appExists = await heroku.doesAppExist({ appName: mainAppName })
-
-  if (!appExists) {
+  const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
+  if (!mainAppExists) {
     if (!createAppIfNotExists) {
       throw new Error(
         `The heroku app "${mainAppName}" does not exist and createAppIfNotExists is set to false for this environment`,
@@ -58,9 +58,27 @@ const createMainApp = async (
         SECRET_KEY_BASE: secretKeyBase,
       },
     })
+
+    const hasuraAppExists = await heroku.doesAppExist({
+      appName: hasuraAppName,
+    })
+    if (hasuraAppExists) {
+      const databaseUrl = await heroku.getEnvVar({
+        appName: mainAppName,
+        varName: 'DATABASE_URL',
+      })
+
+      await heroku.setEnvVars({
+        appName: hasuraAppName,
+        config: {
+          HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
+          HASURA_GRAPHQL_JWT_SECRET: `{ "type": "HS256", "key": "${jwtSecret}", "claims_format": "json" }`,
+        },
+      })
+    }
   }
 
-  const freshMainApp = !appExists
+  const freshMainApp = !mainAppExists
   return freshMainApp
 }
 
@@ -82,9 +100,10 @@ const createHasuraApp = async (
     createAppIfNotExists,
   } = target
 
-  const appExists = await heroku.doesAppExist({ appName: hasuraAppName })
+  const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
+  const hasuraAppExists = await heroku.doesAppExist({ appName: hasuraAppName })
 
-  if (!appExists) {
+  if (!hasuraAppExists) {
     if (!createAppIfNotExists) {
       throw new Error(
         `The heroku app "${hasuraAppName}" does not exist and createAppIfNotExists is set to false for this environment`,
@@ -98,24 +117,32 @@ const createHasuraApp = async (
       pipelineStage,
     })
 
-    const jwtSecret = await heroku.getEnvVar({
-      appName: mainAppName,
-      varName: 'HASURA_JWT_SECRET',
-    })
-    if (isEmptyString(jwtSecret)) {
-      throw new Error(
-        `The '${mainAppName}' Heroku app does not have a HASURA_JWT_SECRET env var!`,
-      )
-    }
+    let jwtSecret: string
+    let databaseUrl: string
 
-    const databaseUrl = await heroku.getEnvVar({
-      appName: mainAppName,
-      varName: 'DATABASE_URL',
-    })
-    if (isEmptyString(databaseUrl)) {
-      throw new Error(
-        `The '${mainAppName}' Heroku app does not have a DATABASE_URL env var!`,
-      )
+    if (mainAppExists) {
+      jwtSecret = await heroku.getEnvVar({
+        appName: mainAppName,
+        varName: 'HASURA_JWT_SECRET',
+      })
+      if (isEmptyString(jwtSecret)) {
+        throw new Error(
+          `The '${mainAppName}' Heroku app does not have a HASURA_JWT_SECRET env var!`,
+        )
+      }
+
+      databaseUrl = await heroku.getEnvVar({
+        appName: mainAppName,
+        varName: 'DATABASE_URL',
+      })
+      if (isEmptyString(databaseUrl)) {
+        throw new Error(
+          `The '${mainAppName}' Heroku app does not have a DATABASE_URL env var!`,
+        )
+      }
+    } else {
+      jwtSecret = 'please_update_me'
+      databaseUrl = 'please_update_me'
     }
 
     await heroku.setEnvVars({
@@ -132,7 +159,7 @@ const createHasuraApp = async (
     })
   }
 
-  const freshHasuraApp = !appExists
+  const freshHasuraApp = !hasuraAppExists
   return freshHasuraApp
 }
 
