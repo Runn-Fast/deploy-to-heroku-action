@@ -100,9 +100,7 @@ const createHasuraApp = async (
     createAppIfNotExists,
   } = target
 
-  const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
   const hasuraAppExists = await heroku.doesAppExist({ appName: hasuraAppName })
-
   if (!hasuraAppExists) {
     if (!createAppIfNotExists) {
       throw new Error(
@@ -120,6 +118,7 @@ const createHasuraApp = async (
     let jwtSecret: string
     let databaseUrl: string
 
+    const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
     if (mainAppExists) {
       jwtSecret = await heroku.getEnvVar({
         appName: mainAppName,
