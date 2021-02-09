@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { isEmptyString } from './utils'
+import { isEmptyString } from './is-empty-string'
 
 test('should return true when input is empty', (t) => {
   t.true(isEmptyString(null))

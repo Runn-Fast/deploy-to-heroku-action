@@ -1,7 +1,7 @@
 import * as heroku from './heroku'
 import { Target } from './targets'
 import { randomHex } from './crypto'
-import { isEmptyString } from './utils'
+import { isEmptyString } from './is-empty-string'
 import { EnvVars } from './env-vars'
 
 type CreateMainAppOptions = {
