@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 
 import * as docker from './docker'
 import * as heroku from './heroku'
@@ -9,9 +8,6 @@ import { getDeploymentTargets } from './targets'
 import { parseEnvVars } from './env-vars'
 
 const main = async () => {
-  console.dir(process.env, { depth: 5 })
-  console.dir(github, { depth: 5 })
-
   const githubAPIKey = core.getInput('github_api_key')
   const herokuEmail = core.getInput('heroku_email')
   const herokuAPIKey = core.getInput('heroku_api_key')
@@ -88,7 +84,7 @@ const main = async () => {
       await heroku.setEnvVars({
         appName: target.hasuraAppName,
         config: {
-          GIT_VERSION: 'unknown',
+          COMMIT_SHA: target.commitSHA,
         },
       })
 
@@ -109,7 +105,7 @@ const main = async () => {
       await heroku.setEnvVars({
         appName: target.mainAppName,
         config: {
-          GIT_VERSION: 'unknown',
+          COMMIT_SHA: target.commitSHA,
         },
       })
 

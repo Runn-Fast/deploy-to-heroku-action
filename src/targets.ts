@@ -1,8 +1,7 @@
 import * as github from '@actions/github'
 
-const { GITHUB_REF } = process.env
-
 type Target = {
+  commitSHA: string,
   mainAppName: string,
   hasuraAppName: string,
   team: string,
@@ -15,49 +14,67 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
   const team = 'runn'
   const pipelineName = 'runn-app'
 
-  switch (GITHUB_REF) {
-    case 'refs/heads/development':
-      return [
-        {
-          mainAppName: 'runn-app-staging',
-          hasuraAppName: 'runn-hasura-staging',
-          team,
-          pipelineName,
-          pipelineStage: 'staging',
-          createAppIfNotExists: false,
-        },
-      ]
-    case 'refs/heads/test':
-      return [
-        {
-          mainAppName: 'runn-app-test',
-          hasuraAppName: 'runn-hasura-test',
-          team,
-          pipelineName,
-          pipelineStage: 'staging',
-          createAppIfNotExists: false,
-        },
-      ]
-    case 'refs/heads/production':
-      return [
-        {
-          mainAppName: 'runn-app-production',
-          hasuraAppName: 'runn-hasura-production',
-          team,
-          pipelineName,
-          pipelineStage: 'production',
-          createAppIfNotExists: false,
-        },
-        {
-          mainAppName: 'runn-app-euronext',
-          hasuraAppName: 'runn-hasura-euronext',
-          team,
-          pipelineName,
-          pipelineStage: 'production',
-          createAppIfNotExists: false,
-        },
-      ]
-    default:
+  switch (github.context.eventName) {
+    case 'push': {
+      const commitSHA = github.context.sha
+
+      switch (github.context.ref) {
+        case 'refs/heads/development': {
+          return [
+            {
+              commitSHA,
+              mainAppName: 'runn-app-staging',
+              hasuraAppName: 'runn-hasura-staging',
+              team,
+              pipelineName,
+              pipelineStage: 'staging',
+              createAppIfNotExists: false,
+            },
+          ]
+        }
+        case 'refs/heads/test': {
+          return [
+            {
+              commitSHA,
+              mainAppName: 'runn-app-test',
+              hasuraAppName: 'runn-hasura-test',
+              team,
+              pipelineName,
+              pipelineStage: 'staging',
+              createAppIfNotExists: false,
+            },
+          ]
+        }
+        case 'refs/heads/production': {
+          return [
+            {
+              commitSHA,
+              mainAppName: 'runn-app-production',
+              hasuraAppName: 'runn-hasura-production',
+              team,
+              pipelineName,
+              pipelineStage: 'production',
+              createAppIfNotExists: false,
+            },
+            {
+              commitSHA,
+              mainAppName: 'runn-app-euronext',
+              hasuraAppName: 'runn-hasura-euronext',
+              team,
+              pipelineName,
+              pipelineStage: 'production',
+              createAppIfNotExists: false,
+            },
+          ]
+        }
+        default: {
+          throw new Error(
+            `The branch "${github.context.ref}" does not have a deployment target defined.`,
+          )
+        }
+      }
+    }
+    case 'pull_request': {
       const pullRequestId = github.context.payload.number
 
       if (pullRequestId == null) {
@@ -66,6 +83,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
 
       return [
         {
+          commitSHA: github.context.payload.pull_request.head.sha,
           mainAppName: `runn-pr-${pullRequestId}-app`,
           hasuraAppName: `runn-pr-${pullRequestId}-hasura`,
           team,
@@ -74,6 +92,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
           createAppIfNotExists: true,
         },
       ]
+    }
   }
 }
 
