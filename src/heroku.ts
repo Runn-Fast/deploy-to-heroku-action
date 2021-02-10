@@ -110,9 +110,9 @@ const destroyApp = async (options: DestroyAppOptions): Promise<void> => {
   const { appName } = options
 
   // safety net
-  if (/(production|euronext|staging)/.test(appName)) {
+  if (/^runn-pr-\d+-(app|hasura)$/.test(appName) !== true) {
     throw new Error(
-      `Error: you should only destroy development apps, not "${appName}"`,
+      `We should only be destroying temporary development apps, not "${appName}"!`,
     )
   }
 
