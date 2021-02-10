@@ -15,7 +15,9 @@ const setCommitEnvVar = async (
     return /^COMMIT_\w{40}$/.test(key)
   })
 
-  await heroku.unsetEnvVars({ appName, varNames: varsToUnset })
+  if (varsToUnset.length > 0) {
+    await heroku.unsetEnvVars({ appName, varNames: varsToUnset })
+  }
 
   const key = `COMMIT_${commitSHA}`
   await heroku.setEnvVars({
