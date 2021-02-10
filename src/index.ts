@@ -6,6 +6,7 @@ import { createMainApp, createHasuraApp } from './create-app-environment'
 import { garbageCollectHerokuApps } from './garbage-collect-heroku-apps'
 import { getDeploymentTargets } from './targets'
 import { parseEnvVars } from './env-vars'
+import { setCommitEnvVar } from './set-commit-env-var'
 
 const main = async () => {
   const githubAPIKey = core.getInput('github_api_key')
@@ -81,11 +82,9 @@ const main = async () => {
         appName: target.hasuraAppName,
         processTypes: ['web'],
       })
-      await heroku.setEnvVars({
+      await setCommitEnvVar({
         appName: target.hasuraAppName,
-        config: {
-          COMMIT_SHA: target.commitSHA,
-        },
+        commitSHA: target.commitSHA,
       })
 
       if (freshHasuraApp) {
@@ -102,11 +101,9 @@ const main = async () => {
         appName: target.mainAppName,
         processTypes: ['web', 'worker'],
       })
-      await heroku.setEnvVars({
+      await setCommitEnvVar({
         appName: target.mainAppName,
-        config: {
-          COMMIT_SHA: target.commitSHA,
-        },
+        commitSHA: target.commitSHA,
       })
 
       await heroku.run({
