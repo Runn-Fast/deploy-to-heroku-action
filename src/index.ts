@@ -30,7 +30,9 @@ const main = async () => {
 
   for (const target of targets) {
     let deployingMainApp = false
+    let deployingHasuraApp = false
     let freshMainApp = false
+    let freshHasuraApp = false
 
     for (const sourceImage of images) {
       const [appType, processType] = sourceImage.split('_')
@@ -43,41 +45,70 @@ const main = async () => {
           break
         case 'hasura':
           appName = target.hasuraAppName
+          deployingHasuraApp = true
           break
         default:
           throw new Error(`Unsupported app type: "${appType}"`)
       }
 
-      let freshApp: boolean
       switch (appName) {
-        case target.mainAppName:
-          freshApp = await createMainApp({ target, envVars })
+        case target.mainAppName: {
+          const freshApp = await createMainApp({ target, envVars })
           if (freshApp) {
             freshMainApp = true
           }
           break
-        case target.hasuraAppName:
-          freshApp = await createHasuraApp({ target, envVars })
+        }
+        case target.hasuraAppName: {
+          const freshApp = await createHasuraApp({ target, envVars })
+          if (freshApp) {
+            freshHasuraApp = true
+          }
           break
-        default:
+        }
+        default: {
           throw new Error(`Unsupported app name: "${appName}"`)
+        }
       }
 
       const targetImage = `registry.heroku.com/${appName}/${processType}`
       await docker.tag({ sourceImage, targetImage })
       await docker.push({ image: targetImage })
-      await heroku.releaseContainer({ appName, processTypes: [processType] })
+    }
 
-      if (freshApp) {
+    if (deployingHasuraApp) {
+      await heroku.releaseContainer({
+        appName: target.hasuraAppName,
+        processTypes: ['web'],
+      })
+      await heroku.setEnvVars({
+        appName: target.hasuraAppName,
+        config: {
+          COMMIT_SHA: target.commitSHA,
+        },
+      })
+
+      if (freshHasuraApp) {
         // wait for database to be seeded before we start hasura
         await heroku.scaleProcesses({
-          appName,
-          processes: { [processType]: 0 },
+          appName: target.hasuraAppName,
+          processes: { web: 0 },
         })
       }
     }
 
     if (deployingMainApp) {
+      await heroku.releaseContainer({
+        appName: target.mainAppName,
+        processTypes: ['web', 'worker'],
+      })
+      await heroku.setEnvVars({
+        appName: target.mainAppName,
+        config: {
+          COMMIT_SHA: target.commitSHA,
+        },
+      })
+
       await heroku.run({
         appName: target.mainAppName,
         type: 'worker',
