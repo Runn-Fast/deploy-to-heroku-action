@@ -27,11 +27,30 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
           createAppIfNotExists: false,
         },
       ]
+    case 'refs/heads/test':
+      return [
+        {
+          mainAppName: 'runn-app-test',
+          hasuraAppName: 'runn-hasura-test',
+          team,
+          pipelineName,
+          pipelineStage: 'staging',
+          createAppIfNotExists: false,
+        },
+      ]
     case 'refs/heads/production':
       return [
         {
           mainAppName: 'runn-app-production',
           hasuraAppName: 'runn-hasura-production',
+          team,
+          pipelineName,
+          pipelineStage: 'production',
+          createAppIfNotExists: false,
+        },
+        {
+          mainAppName: 'runn-app-euronext',
+          hasuraAppName: 'runn-hasura-euronext',
           team,
           pipelineName,
           pipelineStage: 'production',
