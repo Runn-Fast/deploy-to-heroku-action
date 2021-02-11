@@ -175,6 +175,10 @@ const getAllEnvVars = async (
   const results = await execAndReadAll(
     'heroku',
     ['config', ['--app', appName], '--json'].flat(),
+    {
+      // prevent secrets from being logged to console
+      outStream: createWriteStream('/dev/null'),
+    },
   )
 
   return JSON.parse(results)
