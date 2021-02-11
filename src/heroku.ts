@@ -5,6 +5,7 @@ import { join as joinPath } from 'path'
 import { createWriteStream } from 'fs'
 
 import { exec, execAndReadAll } from './exec'
+import { EnvVars } from './env-vars'
 
 const writeFile = promisify(fs.writeFile)
 
@@ -162,6 +163,27 @@ const getEnvVar = async (options: GetEnvVarOptions): Promise<string> => {
   return value.trim()
 }
 
+type GetAllEnvVarsOptions = {
+  appName: string,
+}
+
+const getAllEnvVars = async (
+  options: GetAllEnvVarsOptions,
+): Promise<EnvVars> => {
+  const { appName } = options
+
+  const results = await execAndReadAll(
+    'heroku',
+    ['config', ['--app', appName], '--json'].flat(),
+    {
+      // prevent secrets from being logged to console
+      outStream: createWriteStream('/dev/null'),
+    },
+  )
+
+  return JSON.parse(results)
+}
+
 type SetEnvVarOptions = {
   appName: string,
   config: Record<string, string>,
@@ -175,6 +197,17 @@ const setEnvVars = async (options: SetEnvVarOptions): Promise<void> => {
   })
 
   await exec('heroku', ['config:set', ...vars, ['--app', appName]].flat())
+}
+
+type UnsetEnvVarOptions = {
+  appName: string,
+  varNames: string[],
+}
+
+const unsetEnvVars = async (options: UnsetEnvVarOptions): Promise<void> => {
+  const { appName, varNames } = options
+
+  await exec('heroku', ['config:unset', ...varNames, ['--app', appName]].flat())
 }
 
 type ReleaseContainerOptions = {
@@ -232,7 +265,9 @@ export {
   destroyApp,
   createAddon,
   getEnvVar,
+  getAllEnvVars,
   setEnvVars,
+  unsetEnvVars,
   releaseContainer,
   scaleProcesses,
   run,
