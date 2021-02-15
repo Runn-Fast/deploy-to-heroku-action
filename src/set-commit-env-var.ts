@@ -10,8 +10,13 @@ const setCommitEnvVar = async (
 ): Promise<void> => {
   const { appName, commitSHA } = options
 
+  const commitSHAKey = `COMMIT_${commitSHA}`
+
   const existingEnvVars = await heroku.getAllEnvVars({ appName })
   const varsToUnset = Object.keys(existingEnvVars).filter((key) => {
+    if (key === commitSHAKey) {
+      return false
+    }
     return /^COMMIT_\w{40}$/.test(key)
   })
 
@@ -19,12 +24,11 @@ const setCommitEnvVar = async (
     await heroku.unsetEnvVars({ appName, varNames: varsToUnset })
   }
 
-  const key = `COMMIT_${commitSHA}`
   await heroku.setEnvVars({
     appName,
     config: {
       COMMIT_SHA: commitSHA,
-      [key]: commitSHA,
+      [commitSHAKey]: commitSHA,
     },
   })
 }
