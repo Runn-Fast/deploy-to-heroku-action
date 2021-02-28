@@ -9,6 +9,7 @@ type Target = {
   pipelineName: string,
   pipelineStage: string,
   createAppIfNotExists: boolean,
+  hasPullRequest: boolean,
 }
 
 const getDeploymentTargets = async (): Promise<Target[]> => {
@@ -31,6 +32,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
               pipelineName,
               pipelineStage: 'staging',
               createAppIfNotExists: false,
+              hasPullRequest: false,
             },
           ]
         }
@@ -45,6 +47,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
               pipelineName,
               pipelineStage: 'staging',
               createAppIfNotExists: false,
+              hasPullRequest: false,
             },
           ]
         }
@@ -59,6 +62,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
               pipelineName,
               pipelineStage: 'production',
               createAppIfNotExists: false,
+              hasPullRequest: false,
             },
             {
               commitSHA,
@@ -69,6 +73,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
               pipelineName,
               pipelineStage: 'production',
               createAppIfNotExists: false,
+              hasPullRequest: false,
             },
           ]
         }
@@ -96,6 +101,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
           pipelineName,
           pipelineStage: 'development',
           createAppIfNotExists: true,
+          hasPullRequest: true,
         },
       ]
     }
