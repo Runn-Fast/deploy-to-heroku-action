@@ -7,6 +7,11 @@ import { garbageCollectHerokuApps } from './garbage-collect-heroku-apps'
 import { getDeploymentTargets } from './targets'
 import { parseEnvVars } from './env-vars'
 import { setCommitEnvVar } from './set-commit-env-var'
+import {
+  createGithubDeployment,
+  setGithubDeploymentStatus,
+  GithubDeploymentState,
+} from './github-deployments'
 
 const main = async () => {
   const githubAPIKey = core.getInput('github_api_key')
@@ -125,6 +130,18 @@ const main = async () => {
         await heroku.scaleProcesses({
           appName: target.hasuraAppName,
           processes: { web: 1 },
+        })
+
+        const deploymentId = await createGithubDeployment({
+          githubAPIKey,
+          ref: target.commitSHA,
+        })
+        await setGithubDeploymentStatus({
+          githubAPIKey,
+          ref: target.commitSHA,
+          deploymentId,
+          state: GithubDeploymentState.SUCCESS,
+          environmentUrl: target.mainAppUrl,
         })
       }
     }

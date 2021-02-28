@@ -3,6 +3,7 @@ import * as github from '@actions/github'
 type Target = {
   commitSHA: string,
   mainAppName: string,
+  mainAppUrl: string,
   hasuraAppName: string,
   team: string,
   pipelineName: string,
@@ -24,6 +25,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             {
               commitSHA,
               mainAppName: 'runn-app-staging',
+              mainAppUrl: 'https://runn-app-staging.herokuapp.com',
               hasuraAppName: 'runn-hasura-staging',
               team,
               pipelineName,
@@ -37,6 +39,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             {
               commitSHA,
               mainAppName: 'runn-app-test',
+              mainAppUrl: 'https://runn-app-test.herokuapp.com',
               hasuraAppName: 'runn-hasura-test',
               team,
               pipelineName,
@@ -50,6 +53,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             {
               commitSHA,
               mainAppName: 'runn-app-production',
+              mainAppUrl: 'https://runn-app-production.herokuapp.com',
               hasuraAppName: 'runn-hasura-production',
               team,
               pipelineName,
@@ -59,6 +63,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             {
               commitSHA,
               mainAppName: 'runn-app-euronext',
+              mainAppUrl: 'https://runn-app-euronext.herokuapp.com',
               hasuraAppName: 'runn-hasura-euronext',
               team,
               pipelineName,
@@ -85,6 +90,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         {
           commitSHA: github.context.payload.pull_request.head.sha,
           mainAppName: `runn-pr-${pullRequestId}-app`,
+          mainAppUrl: `https://runn-pr-${pullRequestId}-app.herokuapp.com`,
           hasuraAppName: `runn-pr-${pullRequestId}-hasura`,
           team,
           pipelineName,
