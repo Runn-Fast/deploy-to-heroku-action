@@ -13,7 +13,7 @@ const garbageCollectHerokuApps = async (
 
   const octokit = github.getOctokit(githubAPIKey)
 
-  const { data: pullRequests } = await octokit.request(
+  const pullRequests = await octokit.paginate(
     'GET /repos/{owner}/{repo}/pulls',
     {
       owner: 'Runn-Fast',
