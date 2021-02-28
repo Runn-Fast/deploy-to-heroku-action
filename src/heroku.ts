@@ -253,7 +253,14 @@ const run = async (options: RunOptions): Promise<void> => {
   const { appName, type, command } = options
   await exec(
     'heroku',
-    ['run', ['--app', appName], ['--type', type], '--', ...command].flat(),
+    [
+      'run',
+      '--exit-code',
+      ['--app', appName],
+      ['--type', type],
+      '--',
+      ...command,
+    ].flat(),
   )
 }
 
