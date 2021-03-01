@@ -249,19 +249,33 @@ type RunOptions = {
   command: string[],
 }
 
-const run = async (options: RunOptions): Promise<void> => {
+const run = async (options: RunOptions): Promise<string> => {
   const { appName, type, command } = options
-  await exec(
+  const logs = await execAndReadAll(
     'heroku',
     [
       'run',
       '--exit-code',
+      '--no-tty',
+      '--no-notify',
       ['--app', appName],
       ['--type', type],
       '--',
       ...command,
     ].flat(),
   )
+  return logs
+}
+
+type RestartProcessOptions = {
+  appName: string,
+  processName: string,
+}
+
+const restartProcess = async (options: RestartProcessOptions) => {
+  const { appName, processName } = options
+
+  await exec('heroku', ['ps:restart', processName, ['--app', appName]].flat())
 }
 
 export {
@@ -278,4 +292,5 @@ export {
   releaseContainer,
   scaleProcesses,
   run,
+  restartProcess,
 }

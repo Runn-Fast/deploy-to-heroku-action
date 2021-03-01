@@ -111,11 +111,25 @@ const main = async () => {
         commitSHA: target.commitSHA,
       })
 
-      await heroku.run({
+      const logs = await heroku.run({
         appName: target.mainAppName,
         type: 'worker',
         command: ['bundle', 'exec', 'rake', 'db:migrate'],
       })
+
+      console.log(logs)
+
+      if (/migrating/.test(logs)) {
+        await heroku.restartProcess({
+          appName: target.mainAppName,
+          processName: 'web',
+        })
+
+        await heroku.restartProcess({
+          appName: target.mainAppName,
+          processName: 'worker',
+        })
+      }
 
       if (freshMainApp) {
         await heroku.run({
