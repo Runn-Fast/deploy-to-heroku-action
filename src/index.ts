@@ -102,18 +102,6 @@ const main = async () => {
     }
 
     if (deployingMainApp) {
-      const deploymentId = await createGithubDeployment({
-        githubAPIKey,
-        ref: target.commitSHA,
-      })
-      await setGithubDeploymentStatus({
-        githubAPIKey,
-        ref: target.commitSHA,
-        deploymentId,
-        state: GithubDeploymentState.IN_PROGRESS,
-        environmentUrl: target.mainAppUrl,
-      })
-
       await heroku.releaseContainer({
         appName: target.mainAppName,
         processTypes: ['web', 'worker'],
@@ -145,13 +133,19 @@ const main = async () => {
         })
       }
 
-      await setGithubDeploymentStatus({
-        githubAPIKey,
-        ref: target.commitSHA,
-        deploymentId,
-        state: GithubDeploymentState.SUCCESS,
-        environmentUrl: target.mainAppUrl,
-      })
+      if (target.hasPullRequest) {
+        const deploymentId = await createGithubDeployment({
+          githubAPIKey,
+          ref: target.commitSHA,
+        })
+        await setGithubDeploymentStatus({
+          githubAPIKey,
+          ref: target.commitSHA,
+          deploymentId,
+          state: GithubDeploymentState.SUCCESS,
+          environmentUrl: target.mainAppUrl,
+        })
+      }
     }
   }
 }
