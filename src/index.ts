@@ -116,18 +116,7 @@ const main = async () => {
         type: 'worker',
         command: ['bundle', 'exec', 'rake', 'db:migrate'],
       })
-
-      if (/ migrating =/.test(logs)) {
-        await heroku.restartProcess({
-          appName: target.mainAppName,
-          processName: 'web',
-        })
-
-        await heroku.restartProcess({
-          appName: target.mainAppName,
-          processName: 'worker',
-        })
-      }
+      const databaseHasChanged = / migrating =/.test(logs)
 
       if (freshMainApp) {
         await heroku.run({
@@ -142,6 +131,16 @@ const main = async () => {
         await heroku.scaleProcesses({
           appName: target.hasuraAppName,
           processes: { web: 1 },
+        })
+      } else if (databaseHasChanged) {
+        await heroku.restartProcess({
+          appName: target.mainAppName,
+          processName: 'web',
+        })
+
+        await heroku.restartProcess({
+          appName: target.mainAppName,
+          processName: 'worker',
         })
       }
 
