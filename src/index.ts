@@ -117,9 +117,7 @@ const main = async () => {
         command: ['bundle', 'exec', 'rake', 'db:migrate'],
       })
 
-      console.log(logs)
-
-      if (/migrating/.test(logs)) {
+      if (/ migrating =/.test(logs)) {
         await heroku.restartProcess({
           appName: target.mainAppName,
           processName: 'web',
