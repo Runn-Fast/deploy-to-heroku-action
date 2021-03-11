@@ -36,9 +36,7 @@ const main = async () => {
 
   for (const target of targets) {
     let deployingMainApp = false
-    let deployingHasuraApp = false
     let freshMainApp = false
-    let freshHasuraApp = false
 
     for (const sourceImage of images) {
       const [appType, processType] = sourceImage.split('_')
@@ -51,7 +49,6 @@ const main = async () => {
           break
         case 'hasura':
           appName = target.hasuraAppName
-          deployingHasuraApp = true
           break
         default:
           throw new Error(`Unsupported app type: "${appType}"`)
@@ -66,10 +63,7 @@ const main = async () => {
           break
         }
         case target.hasuraAppName: {
-          const freshApp = await createHasuraApp({ target, envVars })
-          if (freshApp) {
-            freshHasuraApp = true
-          }
+          await createHasuraApp({ target, envVars })
           break
         }
         default: {
@@ -82,32 +76,22 @@ const main = async () => {
       await docker.push({ image: targetImage })
     }
 
-    if (deployingHasuraApp) {
+    if (deployingMainApp) {
       await heroku.releaseContainer({
         appName: target.hasuraAppName,
         processTypes: ['web'],
       })
-      await setCommitEnvVar({
-        appName: target.hasuraAppName,
-        commitSHA: target.commitSHA,
-      })
-
-      if (freshHasuraApp) {
-        // wait for database to be seeded before we start hasura
-        await heroku.scaleProcesses({
-          appName: target.hasuraAppName,
-          processes: { web: 0 },
-        })
-      }
-    }
-
-    if (deployingMainApp) {
       await heroku.releaseContainer({
         appName: target.mainAppName,
         processTypes: ['web', 'worker'],
       })
+
       await setCommitEnvVar({
         appName: target.mainAppName,
+        commitSHA: target.commitSHA,
+      })
+      await setCommitEnvVar({
+        appName: target.hasuraAppName,
         commitSHA: target.commitSHA,
       })
 

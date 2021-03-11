@@ -272,7 +272,9 @@ type RestartProcessOptions = {
   processName: string,
 }
 
-const restartProcess = async (options: RestartProcessOptions) => {
+const restartProcess = async (
+  options: RestartProcessOptions,
+): Promise<void> => {
   const { appName, processName } = options
 
   await exec('heroku', ['ps:restart', processName, ['--app', appName]].flat())
