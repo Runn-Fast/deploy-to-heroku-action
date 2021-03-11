@@ -37,7 +37,6 @@ const main = async () => {
   for (const target of targets) {
     let deployingMainApp = false
     let freshMainApp = false
-    let freshHasuraApp = false
 
     for (const sourceImage of images) {
       const [appType, processType] = sourceImage.split('_')
@@ -64,10 +63,7 @@ const main = async () => {
           break
         }
         case target.hasuraAppName: {
-          const freshApp = await createHasuraApp({ target, envVars })
-          if (freshApp) {
-            freshHasuraApp = true
-          }
+          await createHasuraApp({ target, envVars })
           break
         }
         default: {
@@ -78,14 +74,6 @@ const main = async () => {
       const targetImage = `registry.heroku.com/${appName}/${processType}`
       await docker.tag({ sourceImage, targetImage })
       await docker.push({ image: targetImage })
-    }
-
-    if (freshHasuraApp) {
-      // wait for database to be seeded before we start hasura
-      await heroku.scaleProcesses({
-        appName: target.hasuraAppName,
-        processes: { web: 0 },
-      })
     }
 
     if (deployingMainApp) {
