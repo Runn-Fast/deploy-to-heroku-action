@@ -124,7 +124,7 @@ const main = async () => {
 
         await heroku.restartProcess({
           appName: target.mainAppName,
-          processName: 'worker',
+          processName: 'web',
         })
       }
 
