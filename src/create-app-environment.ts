@@ -73,6 +73,7 @@ const createMainApp = async (
       await heroku.setEnvVars({
         appName: hasuraAppName,
         config: {
+          HASURA_ACTIONS_AUTHORIZATION_HEADER: `Bearer ${actionsSecret}`,
           HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
           HASURA_GRAPHQL_JWT_SECRET: `{ "type": "HS256", "key": "${jwtSecret}", "claims_format": "json" }`,
         },
