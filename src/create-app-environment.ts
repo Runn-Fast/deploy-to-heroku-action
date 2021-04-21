@@ -47,6 +47,7 @@ const createMainApp = async (
       wait: true,
     })
 
+    const actionsSecret = randomHex(64)
     const jwtSecret = randomHex(64)
     const secretKeyBase = randomHex(64)
 
@@ -54,6 +55,7 @@ const createMainApp = async (
       appName: mainAppName,
       config: {
         ...envVars,
+        RUBY_ACTIONS_API_SECRET: actionsSecret,
         HASURA_JWT_SECRET: jwtSecret,
         SECRET_KEY_BASE: secretKeyBase,
       },
@@ -115,11 +117,31 @@ const createHasuraApp = async (
       pipelineStage,
     })
 
+    /*
+     * environment variables
+     * ---------------------
+     *
+     * - actionsSecret: used by Hasura Actions to use the Ruby Server for mutations
+     * - jwtSecret: used to authenticate users to the Hasura server
+     * - databaseUrl: used by Hasura to connect to the database
+     */
+
+    let actionsSecret: string
     let jwtSecret: string
     let databaseUrl: string
 
     const mainAppExists = await heroku.doesAppExist({ appName: mainAppName })
     if (mainAppExists) {
+      actionsSecret = await heroku.getEnvVar({
+        appName: mainAppName,
+        varName: 'RUBY_ACTIONS_API_SECRET',
+      })
+      if (isEmptyString(actionsSecret)) {
+        throw new Error(
+          `The '${mainAppName}' Heroku app does not have a RUBY_ACTIONS_API_SECRET env var!`,
+        )
+      }
+
       jwtSecret = await heroku.getEnvVar({
         appName: mainAppName,
         varName: 'HASURA_JWT_SECRET',
@@ -140,6 +162,7 @@ const createHasuraApp = async (
         )
       }
     } else {
+      actionsSecret = 'please_update_me'
       jwtSecret = 'please_update_me'
       databaseUrl = 'please_update_me'
     }
@@ -147,13 +170,14 @@ const createHasuraApp = async (
     await heroku.setEnvVars({
       appName: hasuraAppName,
       config: {
+        HASURA_ACTIONS_RUBY_ENDPOINT: `https://${mainAppName}.herokuapp.com`,
+        HASURA_ACTIONS_AUTHORIZATION_HEADER: `Bearer ${actionsSecret}`,
         HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
         HASURA_GRAPHQL_ADMIN_SECRET: envVars.HASURA_ADMIN_SECRET,
         HASURA_GRAPHQL_DEV_MODE: 'true',
         HASURA_GRAPHQL_ENABLE_CONSOLE: 'true',
         HASURA_GRAPHQL_ENABLE_TELEMETRY: 'false',
         HASURA_GRAPHQL_JWT_SECRET: `{ "type": "HS256", "key": "${jwtSecret}", "claims_format": "json" }`,
-        ACTIONS_BASE_URL: `https://${mainAppName}.herokuapp.com`,
       },
     })
   }
