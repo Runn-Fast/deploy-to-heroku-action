@@ -170,7 +170,7 @@ const createHasuraApp = async (
     await heroku.setEnvVars({
       appName: hasuraAppName,
       config: {
-        RUBY_ACTIONS_ENDPOINT: `https://${mainAppName}.herokuapp.com`,
+        HASURA_ACTIONS_RUBY_ENDPOINT: `https://${mainAppName}.herokuapp.com`,
         HASURA_ACTIONS_AUTHORIZATION_HEADER: `Bearer ${actionsSecret}`,
         HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
         HASURA_GRAPHQL_ADMIN_SECRET: envVars.HASURA_ADMIN_SECRET,
