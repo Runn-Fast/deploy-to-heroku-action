@@ -118,7 +118,7 @@ const main = async () => {
         })
       } else if (databaseHasChanged) {
         await heroku.restartProcess({
-          appName: target.mainAppName,
+          appName: target.hasuraAppName,
           processName: 'web',
         })
 
