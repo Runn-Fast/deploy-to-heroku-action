@@ -12,7 +12,7 @@ const createGithubDeployment = async (
 
   const octokit = github.getOctokit(githubAPIKey)
 
-  const { data } = await octokit.request(
+  const result = await octokit.request(
     'POST /repos/{owner}/{repo}/deployments',
     {
       owner: 'Runn-Fast',
@@ -25,8 +25,8 @@ const createGithubDeployment = async (
     },
   )
 
+  const data = result.data as { id: number }
   const deploymentId = data.id
-
   return deploymentId
 }
 
