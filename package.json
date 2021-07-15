@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@stayradiated/pkg": "5.8.0",
-    "@types/node": "15.6.1",
+    "@types/node": "16.3.2",
     "@types/sinon": "10.0.1",
     "@vercel/ncc": "0.28.6",
     "husky": "6.0.0",
