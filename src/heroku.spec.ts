@@ -7,18 +7,21 @@ import * as Heroku from './heroku'
 const test = anyTest as TestInterface<{
   heroku: typeof Heroku,
   exec: SinonStub,
+  execAndReadAll: SinonStub,
 }>
 
 test.beforeEach((t) => {
   // disable calls to exec library
-  const { exec } = stu.mock('./exec')
+  const { exec, execAndReadAll } = stu.mock('./exec')
   exec.resolves()
+  execAndReadAll.resolves('')
 
   const heroku = stu.test('./heroku')
 
   t.context = {
     heroku,
     exec,
+    execAndReadAll,
   }
 })
 
@@ -47,5 +50,64 @@ test('destroyApp: should not allow production to be destroyed', async (t) => {
       message:
         'We should only be destroying temporary development apps, not "production"!',
     },
+  )
+})
+
+test('bootOrRestartDynos: if not running, should boot', async (t) => {
+  const { heroku, exec, execAndReadAll } = t.context
+
+  execAndReadAll.onCall(0).resolves('[]')
+
+  await heroku.bootOrRestartDynos({
+    appName: 'test-app',
+    dynoTypes: ['web', 'worker'],
+  })
+
+  t.is(1, exec.callCount)
+  t.deepEqual(
+    ['heroku', ['ps:scale', 'web=1', 'worker=1', '--app', 'test-app']],
+    exec.args[0],
+  )
+})
+
+test('bootOrRestartDynos: if partially running, should boot & restart', async (t) => {
+  const { heroku, exec, execAndReadAll } = t.context
+
+  execAndReadAll.onCall(0).resolves('[{ "type": "web" }]')
+
+  await heroku.bootOrRestartDynos({
+    appName: 'test-app',
+    dynoTypes: ['web', 'worker'],
+  })
+
+  t.is(2, exec.callCount)
+  t.deepEqual(
+    ['heroku', ['ps:scale', 'worker=1', '--app', 'test-app']],
+    exec.args[0],
+  )
+  t.deepEqual(
+    ['heroku', ['ps:restart', 'web', '--app', 'test-app']],
+    exec.args[1],
+  )
+})
+
+test('bootOrRestartDynos: if running, should restart', async (t) => {
+  const { heroku, exec, execAndReadAll } = t.context
+
+  execAndReadAll.onCall(0).resolves('[{ "type": "worker" },{ "type": "web" }]')
+
+  await heroku.bootOrRestartDynos({
+    appName: 'test-app',
+    dynoTypes: ['web', 'worker'],
+  })
+
+  t.is(2, exec.callCount)
+  t.deepEqual(
+    ['heroku', ['ps:restart', 'web', '--app', 'test-app']],
+    exec.args[0],
+  )
+  t.deepEqual(
+    ['heroku', ['ps:restart', 'worker', '--app', 'test-app']],
+    exec.args[1],
   )
 })
