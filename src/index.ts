@@ -39,7 +39,7 @@ const main = async () => {
     let freshMainApp = false
 
     for (const sourceImage of images) {
-      const [appType, processType] = sourceImage.split('_')
+      const [appType, dynoType] = sourceImage.split('_')
 
       let appName: string
       switch (appType) {
@@ -71,7 +71,7 @@ const main = async () => {
         }
       }
 
-      const targetImage = `registry.heroku.com/${appName}/${processType}`
+      const targetImage = `registry.heroku.com/${appName}/${dynoType}`
       await docker.tag({ sourceImage, targetImage })
       await docker.push({ image: targetImage })
     }
@@ -79,11 +79,11 @@ const main = async () => {
     if (deployingMainApp) {
       await heroku.releaseContainer({
         appName: target.hasuraAppName,
-        processTypes: ['web'],
+        dynoTypes: ['web'],
       })
       await heroku.releaseContainer({
         appName: target.mainAppName,
-        processTypes: ['web', 'worker'],
+        dynoTypes: ['web', 'worker'],
       })
 
       await setCommitEnvVar({
@@ -95,12 +95,11 @@ const main = async () => {
         commitSHA: target.commitSHA,
       })
 
-      const logs = await heroku.run({
+      await heroku.run({
         appName: target.mainAppName,
         type: 'worker',
         command: ['bundle', 'exec', 'rake', 'db:migrate'],
       })
-      const databaseHasChanged = / migrating =/.test(logs)
 
       if (freshMainApp) {
         await heroku.run({
@@ -108,25 +107,17 @@ const main = async () => {
           type: 'worker',
           command: ['bundle', 'exec', 'rake', 'db:seed'],
         })
-        await heroku.scaleProcesses({
-          appName: target.mainAppName,
-          processes: { web: 1, worker: 1 },
-        })
-        await heroku.scaleProcesses({
-          appName: target.hasuraAppName,
-          processes: { web: 1 },
-        })
-      } else if (databaseHasChanged) {
-        await heroku.restartProcess({
-          appName: target.hasuraAppName,
-          processName: 'web',
-        })
-
-        await heroku.restartProcess({
-          appName: target.mainAppName,
-          processName: 'web',
-        })
       }
+
+      await heroku.bootOrRestartDynos({
+        appName: target.mainAppName,
+        dynoTypes: ['web', 'worker'],
+      })
+
+      await heroku.bootOrRestartDynos({
+        appName: target.hasuraAppName,
+        dynoTypes: ['web'],
+      })
 
       if (target.hasPullRequest) {
         const deploymentId = await createGithubDeployment({

@@ -212,33 +212,28 @@ const unsetEnvVars = async (options: UnsetEnvVarOptions): Promise<void> => {
 
 type ReleaseContainerOptions = {
   appName: string,
-  processTypes: string[],
+  dynoTypes: string[],
 }
 
 const releaseContainer = async (
   options: ReleaseContainerOptions,
 ): Promise<void> => {
-  const { appName, processTypes } = options
+  const { appName, dynoTypes } = options
 
   await exec(
     'heroku',
-    ['container:release', ...processTypes, ['--app', appName]].flat(),
+    ['container:release', ...dynoTypes, ['--app', appName]].flat(),
   )
 }
 
-type ScaleProcessesOptions = {
+type ScaleDynosOptions = {
   appName: string,
-  processes: Record<string, number>,
+  dynoTypes: string[],
 }
 
-const scaleProcesses = async (
-  options: ScaleProcessesOptions,
-): Promise<void> => {
-  const { appName, processes } = options
-
-  const args = Object.entries(processes).map(
-    ([processName, count]) => `${processName}=${count}`,
-  )
+const bootDynos = async (options: ScaleDynosOptions): Promise<void> => {
+  const { appName, dynoTypes } = options
+  const args = dynoTypes.map((type) => `${type}=1`)
 
   await exec('heroku', ['ps:scale', ...args, ['--app', appName]].flat())
 }
@@ -267,17 +262,80 @@ const run = async (options: RunOptions): Promise<string> => {
   return logs
 }
 
-type RestartProcessOptions = {
+type GetDynoList = {
   appName: string,
-  processName: string,
 }
 
-const restartProcess = async (
-  options: RestartProcessOptions,
-): Promise<void> => {
-  const { appName, processName } = options
+type DynoStatus = {
+  attach_url: string | null,
+  command: string,
+  created_at: string, // "2021-07-15T00:19:05Z",
+  id: string, // "0b7fe29b-478a-4be0-a871-0a245898161e",
+  name: string, // "web.1",
+  app: {
+    id: string, // "182c5784-2c06-4da0-958c-582176609887",
+    name: string, // "runn-pr-6361-hasura"
+  },
+  release: {
+    id: string, // "e9610be5-9e40-4403-9edf-b79b5bd7bd3b",
+    version: number,
+  },
+  size: string, // "Hobby" | "Standard-2X" | "Performance-L"
+  state: 'up',
+  type: 'web' | 'worker',
+  updated_at: string, // "2021-07-15T00:19:05Z"
+}
 
-  await exec('heroku', ['ps:restart', processName, ['--app', appName]].flat())
+const getDynoList = async (options: GetDynoList): Promise<DynoStatus[]> => {
+  const { appName } = options
+  const result = await execAndReadAll(
+    'heroku',
+    ['ps', '--json', ['--app', appName]].flat(),
+  )
+  return JSON.parse(result) as DynoStatus[]
+}
+
+type RestartDynoOptions = {
+  appName: string,
+  dynoType: string,
+}
+
+const restartDyno = async (options: RestartDynoOptions): Promise<void> => {
+  const { appName, dynoType } = options
+
+  await exec('heroku', ['ps:restart', dynoType, ['--app', appName]].flat())
+}
+
+type BootOrRestartDynosOptions = {
+  appName: string,
+  dynoTypes: string[],
+}
+
+const bootOrRestartDynos = async (
+  options: BootOrRestartDynosOptions,
+): Promise<void> => {
+  const { appName, dynoTypes } = options
+  const dynoList = await getDynoList({ appName })
+  const statusList = dynoTypes.map((dynoType) => {
+    const isRunning = dynoList.some((d) => {
+      return d.type === dynoType
+    })
+    return { dynoType, isRunning }
+  })
+
+  const needsBooting = statusList
+    .filter((s) => s.isRunning === false)
+    .map((s) => s.dynoType)
+  if (needsBooting.length > 0) {
+    await bootDynos({ appName, dynoTypes: needsBooting })
+  }
+
+  const needsRestarting = statusList
+    .filter((s) => s.isRunning === true)
+    .map((s) => s.dynoType)
+  for (const dynoType of needsRestarting) {
+    await restartDyno({ appName, dynoType })
+  }
 }
 
 export {
@@ -292,7 +350,9 @@ export {
   setEnvVars,
   unsetEnvVars,
   releaseContainer,
-  scaleProcesses,
   run,
-  restartProcess,
+  getDynoList,
+  bootDynos,
+  restartDyno,
+  bootOrRestartDynos,
 }
