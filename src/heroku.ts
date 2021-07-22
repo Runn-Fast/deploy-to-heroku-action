@@ -6,6 +6,7 @@ import { createWriteStream } from 'fs'
 
 import { exec, execAndReadAll } from './exec'
 import { EnvVars } from './env-vars'
+import { isReviewAppName } from './is-review-app-name'
 
 const writeFile = promisify(fs.writeFile)
 
@@ -111,7 +112,7 @@ const destroyApp = async (options: DestroyAppOptions): Promise<void> => {
   const { appName } = options
 
   // safety net
-  if (/^runn-pr-\d+-(app|hasura)$/.test(appName) !== true) {
+  if (!isReviewAppName(appName)) {
     throw new Error(
       `We should only be destroying temporary development apps, not "${appName}"!`,
     )
@@ -226,12 +227,14 @@ const releaseContainer = async (
   )
 }
 
-type ScaleDynosOptions = {
+type ScaleDynosToOneOptions = {
   appName: string,
   dynoTypes: string[],
 }
 
-const bootDynos = async (options: ScaleDynosOptions): Promise<void> => {
+const scaleDynosToOne = async (
+  options: ScaleDynosToOneOptions,
+): Promise<void> => {
   const { appName, dynoTypes } = options
   const args = dynoTypes.map((type) => `${type}=1`)
 
@@ -306,15 +309,14 @@ const restartDyno = async (options: RestartDynoOptions): Promise<void> => {
   await exec('heroku', ['ps:restart', dynoType, ['--app', appName]].flat())
 }
 
-type BootOrRestartDynosOptions = {
+type BootDynosOptions = {
   appName: string,
   dynoTypes: string[],
+  restartIfAlreadyRunning?: boolean,
 }
 
-const bootOrRestartDynos = async (
-  options: BootOrRestartDynosOptions,
-): Promise<void> => {
-  const { appName, dynoTypes } = options
+const bootDynos = async (options: BootDynosOptions): Promise<void> => {
+  const { appName, dynoTypes, restartIfAlreadyRunning } = options
   const dynoList = await getDynoList({ appName })
   const statusList = dynoTypes.map((dynoType) => {
     const isRunning = dynoList.some((d) => {
@@ -327,14 +329,16 @@ const bootOrRestartDynos = async (
     .filter((s) => s.isRunning === false)
     .map((s) => s.dynoType)
   if (needsBooting.length > 0) {
-    await bootDynos({ appName, dynoTypes: needsBooting })
+    await scaleDynosToOne({ appName, dynoTypes: needsBooting })
   }
 
-  const needsRestarting = statusList
-    .filter((s) => s.isRunning === true)
-    .map((s) => s.dynoType)
-  for (const dynoType of needsRestarting) {
-    await restartDyno({ appName, dynoType })
+  if (restartIfAlreadyRunning) {
+    const needsRestarting = statusList
+      .filter((s) => s.isRunning === true)
+      .map((s) => s.dynoType)
+    for (const dynoType of needsRestarting) {
+      await restartDyno({ appName, dynoType })
+    }
   }
 }
 
@@ -352,7 +356,7 @@ export {
   releaseContainer,
   run,
   getDynoList,
-  bootDynos,
+  scaleDynosToOne,
   restartDyno,
-  bootOrRestartDynos,
+  bootDynos,
 }
