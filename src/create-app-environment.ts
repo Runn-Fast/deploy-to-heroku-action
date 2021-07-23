@@ -42,6 +42,14 @@ const createMainApp = async (
     })
     await heroku.createAddon({
       appName: mainAppName,
+      addonName: 'logenteries:30',
+    })
+    await heroku.createAddon({
+      appName: mainAppName,
+      addonName: 'coralogix:free-30mbday',
+    })
+    await heroku.createAddon({
+      appName: mainAppName,
       addonName: 'heroku-postgresql:hobby-dev',
       version: '12',
       wait: true,
@@ -116,6 +124,15 @@ const createHasuraApp = async (
       team,
       pipelineName,
       pipelineStage,
+    })
+
+    await heroku.createAddon({
+      appName: mainAppName,
+      addonName: 'logenteries:30',
+    })
+    await heroku.createAddon({
+      appName: mainAppName,
+      addonName: 'coralogix:free-30mbday',
     })
 
     /*
