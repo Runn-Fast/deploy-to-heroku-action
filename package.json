@@ -28,7 +28,7 @@
     "@types/sinon": "10.0.2",
     "@vercel/ncc": "0.28.6",
     "husky": "7.0.1",
-    "lint-staged": "11.0.1",
+    "lint-staged": "11.1.0",
     "stu": "3.2.0"
   }
 }
