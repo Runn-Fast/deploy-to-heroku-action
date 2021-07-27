@@ -62,6 +62,7 @@ const createMainApp = async (
         RUBY_ACTIONS_API_SECRET: actionsSecret,
         HASURA_JWT_SECRET: jwtSecret,
         SECRET_KEY_BASE: secretKeyBase,
+        HASURA_ENDPOINT: `https://${hasuraAppName}.herokuapp.com`,
       },
     })
 
@@ -121,7 +122,7 @@ const createHasuraApp = async (
       pipelineName,
       pipelineStage,
     })
-    
+
     await heroku.createAddon({
       appName: mainAppName,
       addonName: 'coralogix:free-30mbday',

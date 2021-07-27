@@ -53,14 +53,15 @@ test('destroyApp: should not allow production to be destroyed', async (t) => {
   )
 })
 
-test('bootOrRestartDynos: if not running, should boot', async (t) => {
+test('bootDynos: if not running, should boot', async (t) => {
   const { heroku, exec, execAndReadAll } = t.context
 
   execAndReadAll.onCall(0).resolves('[]')
 
-  await heroku.bootOrRestartDynos({
+  await heroku.bootDynos({
     appName: 'test-app',
     dynoTypes: ['web', 'worker'],
+    restartIfAlreadyRunning: false,
   })
 
   t.is(1, exec.callCount)
@@ -70,14 +71,33 @@ test('bootOrRestartDynos: if not running, should boot', async (t) => {
   )
 })
 
-test('bootOrRestartDynos: if partially running, should boot & restart', async (t) => {
+test('bootDynos(restartIfAlreadyRunning=false): if partially running, should only boot', async (t) => {
   const { heroku, exec, execAndReadAll } = t.context
 
   execAndReadAll.onCall(0).resolves('[{ "type": "web" }]')
 
-  await heroku.bootOrRestartDynos({
+  await heroku.bootDynos({
     appName: 'test-app',
     dynoTypes: ['web', 'worker'],
+    restartIfAlreadyRunning: false,
+  })
+
+  t.is(1, exec.callCount)
+  t.deepEqual(
+    ['heroku', ['ps:scale', 'worker=1', '--app', 'test-app']],
+    exec.args[0],
+  )
+})
+
+test('bootDynos(restartIfAlreadyRunning=true): if partially running, should boot & restart', async (t) => {
+  const { heroku, exec, execAndReadAll } = t.context
+
+  execAndReadAll.onCall(0).resolves('[{ "type": "web" }]')
+
+  await heroku.bootDynos({
+    appName: 'test-app',
+    dynoTypes: ['web', 'worker'],
+    restartIfAlreadyRunning: true,
   })
 
   t.is(2, exec.callCount)
@@ -91,14 +111,29 @@ test('bootOrRestartDynos: if partially running, should boot & restart', async (t
   )
 })
 
-test('bootOrRestartDynos: if running, should restart', async (t) => {
+test('bootDynos(restartIfAlreadyRunning=false): if running, should do nothing', async (t) => {
   const { heroku, exec, execAndReadAll } = t.context
 
   execAndReadAll.onCall(0).resolves('[{ "type": "worker" },{ "type": "web" }]')
 
-  await heroku.bootOrRestartDynos({
+  await heroku.bootDynos({
     appName: 'test-app',
     dynoTypes: ['web', 'worker'],
+    restartIfAlreadyRunning: false,
+  })
+
+  t.is(0, exec.callCount)
+})
+
+test('bootDynos(restartIfAlreadyRunning=true): if running, should restart', async (t) => {
+  const { heroku, exec, execAndReadAll } = t.context
+
+  execAndReadAll.onCall(0).resolves('[{ "type": "worker" },{ "type": "web" }]')
+
+  await heroku.bootDynos({
+    appName: 'test-app',
+    dynoTypes: ['web', 'worker'],
+    restartIfAlreadyRunning: true,
   })
 
   t.is(2, exec.callCount)
