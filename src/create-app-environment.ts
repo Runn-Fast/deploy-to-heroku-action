@@ -124,7 +124,7 @@ const createHasuraApp = async (
     })
 
     await heroku.createAddon({
-      appName: mainAppName,
+      appName: hasuraAppName,
       addonName: 'coralogix:free-30mbday',
     })
 
