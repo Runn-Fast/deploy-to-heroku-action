@@ -18,5 +18,5 @@ inputs:
     description: "Comma separated list of images to deploy. Each image should be of the form `appType_processType`"
     required: true
 runs:
-  using: 'node12'
-  main: 'bin/index.js'
+  using: 'node14'
+  main: 'dist/index.js'

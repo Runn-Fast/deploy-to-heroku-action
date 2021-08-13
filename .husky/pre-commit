@@ -1,1 +1,1 @@
-yarn run lint-staged && git add bin
+yarn run lint-staged && git add dist

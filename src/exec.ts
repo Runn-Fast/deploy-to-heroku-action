@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import { exec, ExecOptions } from '@actions/exec'
 
 const execAndReadAll = async (

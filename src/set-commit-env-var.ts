@@ -1,8 +1,8 @@
 import * as heroku from './heroku'
 
 type SetCommitEnvVarOptions = {
-  appName: string,
-  commitSHA: string,
+  appName: string
+  commitSHA: string
 }
 
 const setCommitEnvVar = async (
@@ -17,6 +17,7 @@ const setCommitEnvVar = async (
     if (key === commitSHAKey) {
       return false
     }
+
     return /^COMMIT_\w{40}$/.test(key)
   })
 

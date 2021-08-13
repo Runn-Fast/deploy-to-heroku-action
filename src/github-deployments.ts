@@ -1,8 +1,8 @@
 import * as github from '@actions/github'
 
 type CreateGithubDeploymentOptions = {
-  githubAPIKey: string,
-  ref: string, // ref can be a branch, tag or SHA
+  githubAPIKey: string
+  ref: string // Ref can be a branch, tag or SHA
 }
 
 const createGithubDeployment = async (
@@ -41,11 +41,11 @@ enum GithubDeploymentState {
 }
 
 type SetGithubDeploymentStatusOptions = {
-  githubAPIKey: string,
-  ref: string,
-  deploymentId: number,
-  state: GithubDeploymentState,
-  environmentUrl: string,
+  githubAPIKey: string
+  ref: string
+  deploymentId: number
+  state: GithubDeploymentState
+  environmentUrl: string
 }
 
 const setGithubDeploymentStatus = async (
