@@ -1,4 +1,4 @@
-import fs, { createWriteStream } from 'fs'
+import * as fs from 'fs'
 import { homedir } from 'os'
 import { join as joinPath } from 'path'
 import { promisify } from 'util'
@@ -49,7 +49,7 @@ const getAppList = async (
     'heroku',
     ['apps', '--json', ['--team', team]].flat(),
     {
-      outStream: createWriteStream('/dev/null'),
+      outStream: fs.createWriteStream('/dev/null'),
     },
   )
 
@@ -177,7 +177,7 @@ const getAllEnvVars = async (
     ['config', ['--app', appName], '--json'].flat(),
     {
       // Prevent secrets from being logged to console
-      outStream: createWriteStream('/dev/null'),
+      outStream: fs.createWriteStream('/dev/null'),
     },
   )
 
