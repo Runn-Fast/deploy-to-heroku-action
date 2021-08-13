@@ -1,11 +1,13 @@
-import fs from 'fs/promises'
-import { createWriteStream } from 'fs'
+import fs, { createWriteStream } from 'fs'
 import { homedir } from 'os'
 import { join as joinPath } from 'path'
+import { promisify } from 'util'
 
 import { exec, execAndReadAll } from './exec'
 import { EnvVars } from './env-vars'
 import { isReviewAppName } from './is-review-app-name'
+
+const writeFile = promisify(fs.writeFile)
 
 type LoginOptions = {
   email: string
@@ -24,7 +26,7 @@ machine git.heroku.com
     login ${email}
     password ${apiKey}`
 
-  await fs.writeFile(netrcFilepath, netrc)
+  await writeFile(netrcFilepath, netrc)
 
   console.log(`Created and wrote to ${netrcFilepath}`)
   await exec('heroku', ['container:login'])
