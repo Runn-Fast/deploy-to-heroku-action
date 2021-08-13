@@ -1,8 +1,8 @@
 import { exec } from './exec'
 
 type TagOptions = {
-  sourceImage: string,
-  targetImage: string,
+  sourceImage: string
+  targetImage: string
 }
 
 const tag = async (options: TagOptions): Promise<void> => {
@@ -11,7 +11,7 @@ const tag = async (options: TagOptions): Promise<void> => {
 }
 
 type PushOptions = {
-  image: string,
+  image: string
 }
 
 const push = async (options: PushOptions): Promise<void> => {
