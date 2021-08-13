@@ -5,8 +5,8 @@ import { isEmptyString } from './is-empty-string'
 import { EnvVars } from './env-vars'
 
 type CreateMainAppOptions = {
-  target: Target,
-  envVars: EnvVars,
+  target: Target
+  envVars: EnvVars
 }
 
 const createMainApp = async (
@@ -91,8 +91,8 @@ const createMainApp = async (
 }
 
 type CreateHasuraAppOptions = {
-  target: Target,
-  envVars: EnvVars,
+  target: Target
+  envVars: EnvVars
 }
 
 const createHasuraApp = async (
@@ -129,7 +129,7 @@ const createHasuraApp = async (
     })
 
     /*
-     * environment variables
+     * Environment variables
      * ---------------------
      *
      * - actionsSecret: used by Hasura Actions to use the Ruby Server for mutations
@@ -184,7 +184,7 @@ const createHasuraApp = async (
         HASURA_ACTIONS_RUBY_ENDPOINT: `https://${mainAppName}.herokuapp.com`,
         HASURA_ACTIONS_AUTHORIZATION_HEADER: `Bearer ${actionsSecret}`,
         HASURA_GRAPHQL_DATABASE_URL: databaseUrl,
-        HASURA_GRAPHQL_ADMIN_SECRET: envVars.HASURA_ADMIN_SECRET,
+        HASURA_GRAPHQL_ADMIN_SECRET: envVars['HASURA_ADMIN_SECRET'] ?? '',
         HASURA_GRAPHQL_DEV_MODE: 'true',
         HASURA_GRAPHQL_ENABLE_CONSOLE: 'true',
         HASURA_GRAPHQL_ENABLE_TELEMETRY: 'false',
