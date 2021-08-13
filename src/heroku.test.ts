@@ -5,18 +5,21 @@ import { SinonStub } from 'sinon'
 import * as Heroku from './heroku'
 
 const test = anyTest as TestInterface<{
-  heroku: typeof Heroku,
-  exec: SinonStub,
-  execAndReadAll: SinonStub,
+  heroku: typeof Heroku
+  exec: SinonStub
+  execAndReadAll: SinonStub
 }>
 
 test.beforeEach((t) => {
-  // disable calls to exec library
-  const { exec, execAndReadAll } = stu.mock('./exec')
+  // Disable calls to exec library
+  const { exec, execAndReadAll } = stu.mock('./exec') as {
+    exec: SinonStub
+    execAndReadAll: SinonStub
+  }
   exec.resolves()
   execAndReadAll.resolves('')
 
-  const heroku = stu.test('./heroku')
+  const heroku = stu.test('./heroku') as typeof Heroku
 
   t.context = {
     heroku,
