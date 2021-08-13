@@ -3,8 +3,8 @@ import test from 'ava'
 import { isEmptyString } from './is-empty-string'
 
 test('should return true when input is empty', (t) => {
-  t.true(isEmptyString(null))
-  t.true(isEmptyString(undefined))
+  t.true(isEmptyString(null as unknown as string))
+  t.true(isEmptyString(undefined as unknown as string))
   t.true(isEmptyString(''))
   t.true(isEmptyString(' '))
   t.true(isEmptyString('  '))

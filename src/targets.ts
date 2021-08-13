@@ -1,15 +1,15 @@
 import * as github from '@actions/github'
 
 type Target = {
-  commitSHA: string,
-  mainAppName: string,
-  mainAppUrl: string,
-  hasuraAppName: string,
-  team: string,
-  pipelineName: string,
-  pipelineStage: string,
-  createAppIfNotExists: boolean,
-  hasPullRequest: boolean,
+  commitSHA: string
+  mainAppName: string
+  mainAppUrl: string
+  hasuraAppName: string
+  team: string
+  pipelineName: string
+  pipelineStage: string
+  createAppIfNotExists: boolean
+  hasPullRequest: boolean
 }
 
 const getDeploymentTargets = async (): Promise<Target[]> => {
@@ -36,6 +36,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             },
           ]
         }
+
         case 'refs/heads/test': {
           return [
             {
@@ -51,6 +52,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             },
           ]
         }
+
         case 'refs/heads/production': {
           return [
             {
@@ -77,6 +79,7 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             },
           ]
         }
+
         default: {
           throw new Error(
             `The branch "${github.context.ref}" does not have a deployment target defined.`,
@@ -84,16 +87,25 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         }
       }
     }
-    case 'pull_request': {
-      const pullRequestId = github.context.payload.number
 
-      if (pullRequestId == null) {
+    case 'pull_request': {
+      const { number: pullRequestId, pull_request: pullRequest } = github
+        .context.payload as unknown as {
+        number: string
+        pull_request: {
+          head: {
+            sha: string
+          }
+        }
+      }
+
+      if (!pullRequestId) {
         throw new Error(`Could not find Pull Request ID in github.context`)
       }
 
       return [
         {
-          commitSHA: github.context.payload.pull_request.head.sha,
+          commitSHA: pullRequest.head.sha,
           mainAppName: `runn-pr-${pullRequestId}-app`,
           mainAppUrl: `https://runn-pr-${pullRequestId}-app.herokuapp.com`,
           hasuraAppName: `runn-pr-${pullRequestId}-hasura`,
@@ -105,6 +117,9 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
         },
       ]
     }
+
+    default:
+      return []
   }
 }
 
