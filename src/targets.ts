@@ -75,6 +75,17 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
               createAppIfNotExists: false,
               hasPullRequest: false,
             },
+            {
+              commitSHA,
+              mainAppName: 'runn-app-europe',
+              mainAppUrl: 'https://runn-app-europe.herokuapp.com',
+              hasuraAppName: 'runn-hasura-europe',
+              team,
+              pipelineName,
+              pipelineStage: 'production',
+              createAppIfNotExists: false,
+              hasPullRequest: false,
+            },
           ]
         }
         default: {
