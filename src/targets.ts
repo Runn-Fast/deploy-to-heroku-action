@@ -25,24 +25,9 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
           return [
             {
               commitSHA,
-              mainAppName: 'runn-app-staging',
-              mainAppUrl: 'https://runn-app-staging.herokuapp.com',
-              hasuraAppName: 'runn-hasura-staging',
-              team,
-              pipelineName,
-              pipelineStage: 'staging',
-              createAppIfNotExists: false,
-              hasPullRequest: false,
-            },
-          ]
-        }
-        case 'refs/heads/test': {
-          return [
-            {
-              commitSHA,
-              mainAppName: 'runn-app-test',
-              mainAppUrl: 'https://runn-app-test.herokuapp.com',
-              hasuraAppName: 'runn-hasura-test',
+              mainAppName: 'runn-staging-us-app',
+              mainAppUrl: 'https://runn-staging-us-app.herokuapp.com',
+              hasuraAppName: 'runn-staging-us-hasura',
               team,
               pipelineName,
               pipelineStage: 'staging',
@@ -55,9 +40,9 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
           return [
             {
               commitSHA,
-              mainAppName: 'runn-app-production',
-              mainAppUrl: 'https://runn-app-production.herokuapp.com',
-              hasuraAppName: 'runn-hasura-production',
+              mainAppName: 'runn-prod-eu-app',
+              mainAppUrl: 'https://runn-prod-eu-app.herokuapp.com',
+              hasuraAppName: 'runn-prod-eu-hasura',
               team,
               pipelineName,
               pipelineStage: 'production',
@@ -66,20 +51,9 @@ const getDeploymentTargets = async (): Promise<Target[]> => {
             },
             {
               commitSHA,
-              mainAppName: 'runn-app-euronext',
-              mainAppUrl: 'https://runn-app-euronext.herokuapp.com',
-              hasuraAppName: 'runn-hasura-euronext',
-              team,
-              pipelineName,
-              pipelineStage: 'production',
-              createAppIfNotExists: false,
-              hasPullRequest: false,
-            },
-            {
-              commitSHA,
-              mainAppName: 'runn-app-europe',
-              mainAppUrl: 'https://runn-app-europe.herokuapp.com',
-              hasuraAppName: 'runn-hasura-europe',
+              mainAppName: 'runn-prod-euronext-app',
+              mainAppUrl: 'https://runn-prod-euronext-app.herokuapp.com',
+              hasuraAppName: 'runn-prod-euronext-hasura',
               team,
               pipelineName,
               pipelineStage: 'production',
