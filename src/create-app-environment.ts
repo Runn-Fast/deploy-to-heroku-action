@@ -59,6 +59,7 @@ const createMainApp = async (
       appName: mainAppName,
       config: {
         ...envVars,
+        DOMAIN_URL: `${mainAppName}.herokuapp.com`,
         RUBY_ACTIONS_API_SECRET: actionsSecret,
         HASURA_JWT_SECRET: jwtSecret,
         SECRET_KEY_BASE: secretKeyBase,
